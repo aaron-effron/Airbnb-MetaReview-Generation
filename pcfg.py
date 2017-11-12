@@ -5,6 +5,8 @@ import nltk
 import re
 from collections import defaultdict
 import random
+# This example uses choice to choose from possible expansions
+from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
 '''
@@ -93,14 +95,36 @@ def tokenModifications(token) :
     return token
 
 string = """
-S -> NP VP [1.0]\n
-NP -> DT NN PP [0.5]\n
-NP -> DT NN [0.5]\n
-VP -> VB [.25]\n
-VP -> VB NN [.25]\n
-VP -> VB NP PP [0.5]\n
-PP -> IN NP [1.0]\n
+S -> NP VP [0.5]
+S -> NP VP PP [0.5]
+NP -> DT NN PP [0.5]
+NP -> DT NN [0.5]
+VP -> VB [.25]
+VP -> VB NN [.25]
+VP -> VB NP PP [0.5]
+PP -> IN NP [1.0]
 """
+
+
+
+# This function is based on _generate_all() in nltk.parse.generate
+# It therefore assumes the same import environment otherwise.
+
+frags = []
+
+def generate_sample(grammar, items):
+
+    myPart = ""
+    for item in items: #All symbols to be parsed from a rule passed in
+        if isinstance(item, nltk.Nonterminal):
+            prodList = [prod.rhs() for prod in grammar.productions(lhs=item)]
+            chosen_expansion = choice(prodList)
+            myPart += generate_sample(grammar, list(chosen_expansion))
+        else:
+            myPart += str(item) + ' '
+    return myPart
+
+
 counterDict = defaultdict(int)
 for pair in nltk.pos_tag(text) :
     counterDict[stringModifications(pair[1])] += 1
@@ -117,7 +141,12 @@ viterbi_parser = nltk.ViterbiParser(grammar)
 
 NUM_SENTENCES = 5000
 
-sentences = generate(grammar, n=NUM_SENTENCES, depth = 6)
+#sentences = generate(grammar, n=NUM_SENTENCES, depth = 6)
+sentence = generate_sample(grammar, [nltk.Nonterminal("S")])
+print sentence
+#for tree in viterbi_parser.parse(sentence.split()) :
+#    print tree
+'''
 sentenceList = list(sentences)
 
 for i in range(0, 10) :
@@ -126,3 +155,4 @@ for i in range(0, 10) :
     print rand, sentence
     #for tree in viterbi_parser.parse(sentence) :
     #    print tree
+'''

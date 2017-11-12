@@ -81,6 +81,19 @@ amazing!! East Boston has some hidden gem restaurants and proximity to Airport
 subway station was key. No complaints about the room or bathroom.
 
 Great setup Izzy!
+
+Izzy's assistant was a nice and helpful person. We stayed 7 days, 
+kitchen had everything one needs to make good food even a mixer! Our 
+room was in the cellar and therefore very private. One fight next door where 
+we heard screaming and shouting but overall a very calm neighbourhood and friendly people.
+
+OK stay.  Perhaps best for those on the young/adventurous side of the spectrum!  
+There was a sign that said in the process of renovations.   I think the second 
+floor might be a little noisy some evenings, with 3 rooms up there. The one lower/ground 
+floor room was quieter, but keep in mind not easily accessible with narrow winding stairs. 
+Futon style bed.     The host was prompt with text message responses to questions about parking.  
+Parking in the neighborhood mid-day was easy but all streets were filled with parked/double parked 
+cars by 5pm.  It was a fairly short walk to the Blue line train line - Airport station. 
 '''
 
 text = nltk.word_tokenize(review)
@@ -97,9 +110,18 @@ def tokenModifications(token) :
 string = """
 S -> NP VP [0.5]
 S -> NP VP PP [0.5]
-NP -> DT NN PP [0.5]
-NP -> DT NN [0.5]
-VP -> VB [.25]
+NP -> NNP [0.01]
+NP -> NP CC NP [0.04]
+NP -> PRP [0.1] 
+NP -> DT NN PP [0.1]
+NP -> DT NNS PP [0.25]
+NP -> DT NN [0.125]
+NP -> DT JJ NN [0.125]
+NP -> DT NNS [0.125]
+NP -> DT JJ NNS [0.125]
+VP -> VB [.125]
+VP -> VBZ [.115]
+VP -> VBD [.01]
 VP -> VB NN [.25]
 VP -> VB NP PP [0.5]
 PP -> IN NP [1.0]
@@ -129,12 +151,14 @@ counterDict = defaultdict(int)
 for pair in nltk.pos_tag(text) :
     counterDict[stringModifications(pair[1])] += 1
 
+
 for pair in nltk.pos_tag(text) :
     if pair[1] == "POS" or pair[1] in PUNCTUATION_LIST: #Hack for now
         continue
     second = stringModifications(pair[1])
     string += second + " -> '" + tokenModifications(pair[0]) + "'\t[" + str(float(1)/counterDict[second]) + "]\n"
 
+print string
 #print string
 grammar = nltk.PCFG.fromstring(string)
 viterbi_parser = nltk.ViterbiParser(grammar)

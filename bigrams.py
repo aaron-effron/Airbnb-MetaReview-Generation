@@ -11,7 +11,7 @@ from collections import Counter
 #		bigram_n_prob would have a key of 3 words, and values of POS dictionaries
 #		with the "added" word
 #	num_reviews: number of reviews to go through within the file
-def find_bigrams(file, nplus, num_reviews)
+def find_bigrams(file, nplus, num_reviews):
 	# Bigram probabilities
 	bigram_prob = {}
 	# Intermediate variable to store bigram variables
@@ -72,5 +72,5 @@ def find_bigrams(file, nplus, num_reviews)
 	print bigram_n_prob
 	return bigram_n_prob
 
-if '__name__' == '__main__':
+if __name__ == '__main__':
 	find_bigrams('boston-airbnb-open-data\\reviews.csv', 4, 100)

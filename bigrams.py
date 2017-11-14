@@ -33,7 +33,6 @@ def find_bigrams(file, nplus, num_reviews):
 			if i == num_reviews:
 				break
 			review = '-BEGIN- '+row['comments'].decode('utf-8')
-			print review
 			rparts = sent_tokenize(review)
 			for sent in rparts:
 				words = tokenizer.tokenize(sent)
@@ -42,7 +41,12 @@ def find_bigrams(file, nplus, num_reviews):
 				word_counts += Counter(words)
 				for j in range(len(words) - nplus):
 					# POS tag last word since it's "added"
-					POS = pos_tag(words[j+nplus-1])[0][1]
+					# Need to make the word a list since if we just 
+					# pass in a word, pos_tag will decompose it into
+					# individual letters
+					wordL = []
+					wordL.append(words[j+nplus-1])
+					POS = pos_tag(wordL)[0][1]
 					# key is first 3 words (nplus = 4)
 					key = tuple(words[j:j+nplus-1])
 					if key not in bigram_n_prob:
@@ -69,7 +73,7 @@ def find_bigrams(file, nplus, num_reviews):
 
 				new_bigrams[word] = bigram_prob[begin][word]
 			bigram_n_prob[ngram][POS] = new_bigrams
-	print bigram_n_prob
+
 	return bigram_n_prob
 
 if __name__ == '__main__':

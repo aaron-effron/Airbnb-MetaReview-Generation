@@ -107,6 +107,8 @@ def stringModifications(string) :
 def tokenModifications(token) :
     token = token.replace('n\'t', ' not')
     token = token.replace('\'ve', ' have')
+    if token == 'i' : #Upper case I is properly tagged, whereas lower case is not
+        token = "I"
     return token
 
 #Converted this to a list since it makes it easier later to check
@@ -199,13 +201,15 @@ NUM_SENTENCES = 5000
 
 #sentences = generate(grammar, n=NUM_SENTENCES, depth = 6)
 sentence = generate_sample(grammar, [nltk.Nonterminal("S")])
-print sentence.split()
-for pair in nltk.pos_tag(sentence.split()) :
-    print pair
-#print sentence
 
+posList = []
+for pair in nltk.pos_tag(sentence.split()) :
+    posList.append(pair[1])
+print sentence
+
+print posList
 bigramDict = bigrams.find_bigrams('reviews.csv', 2, 5)
-print bigramDict[(u'BEGIN',)]
+print bigramDict[(u'BEGIN',)][posList[0]]
 #for tree in viterbi_parser.parse(sentence.split()) :
 #    print tree.leaves()
 

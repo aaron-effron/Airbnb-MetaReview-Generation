@@ -115,10 +115,11 @@ def tokenModifications(token) :
 #if a rule has already been added (and ignore it if so)
 #Commenting out PCFG version for now in case we want it back
 
+#"NP -> NNP" This rule is causing issues
+
 ruleList = \
 ["S -> NP VP",
 "S -> NP VP PP",
-"NP -> NNP",
 "NP -> NP CC NP",
 "NP -> PRP",
 "NP -> DT NN PP",
@@ -208,8 +209,21 @@ for pair in nltk.pos_tag(sentence.split()) :
 print sentence
 
 print posList
-bigramDict = bigrams.find_bigrams('reviews.csv', 2, 5)
-print bigramDict[(u'BEGIN',)][posList[0]]
+bigramDict = bigrams.find_bigrams('reviews.csv', 2, 300)
+
+currentWord = ('BEGIN',)
+#print bigramDict['The',]
+finalSentence = []
+for pos in posList :
+    print currentWord, bigramDict[currentWord], pos
+
+    currentWord = ((bigramDict[currentWord][pos]).keys()[0],)
+
+    finalSentence.append(currentWord[0])
+
+print finalSentence
+    #currentWord = (bigramDict[currentWord][pos][0],)
+
 #for tree in viterbi_parser.parse(sentence.split()) :
 #    print tree.leaves()
 

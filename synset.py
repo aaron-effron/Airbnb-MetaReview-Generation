@@ -42,7 +42,7 @@ def get_listings_from_file():
       next(reader, None) # skip header
       for row in reader:
           listing_id = row[0]
-          comments = tb(row[5].decode('unicode_escape').encode('ascii','ignore'))
+          comments = tb(row[5].decode('unicode_escape').encode('ascii','ignore')).lower()
           if listing_id not in listings:
               listings[listing_id] = [comments]
           else:
@@ -50,47 +50,51 @@ def get_listings_from_file():
 
   return listings
   
-def get_most_significant_words(listings, listing_id):
+def get_most_significant_words(listings):
+    selected_reviews = None
+    comparison_reviews = []
+    comparison_review_count = 0
+
+    for listing_id in listings:
+        if comparison_review_count == 5:
+            break
+        if len(listings[listing_id]) > 5:
+            if selected_reviews == None:
+                selected_reviews = listings[listing_id]
+            else:
+                comparison_reviews += listings[listing_id]
+                comparison_review_count += 1
+  
     sorted_scores = []
-    for i, review in enumerate(listings[listing_id]):
-        scores = {word: tfidf(word, review, listings[listing_id]) for word in review.words}
+    for i, review in enumerate(selected_reviews):
+        scores = {word: tfidf(word, review, comparison_reviews) for word in review.words}
         sorted_scores = sorted(scores.items()+sorted_scores, key=lambda x: x[1], reverse=True)
     
-    return sorted_scores[:3]
+    return sorted_scores[:10]
 
-def get_correlation_score(s1, listing1_keywords, s2, listing2_keywords):
-    s1_lemmas = set([])
-    s2_lemmas = set([])
+def get_correlation_score(s1, s2, keywords):
+    lemmas = set([])
     score = 0
 
-    for keyword in listing1_keywords:
-        if keyword in s1:
-          synonyms = wn.synsets(keyword)
-          s1_lemmas |= set(chain.from_iterable([word.lemma_names() for word in synonyms]))
+    for keyword in keywords:
+        synonyms = wn.synsets(keyword)
+        lemmas |= set(chain.from_iterable([word.lemma_names() for word in synonyms]))
 
-    for keyword in listing2_keywords:
-        if keyword in s2:
-          synonyms = wn.synsets(keyword)
-          s2_lemmas |= set(chain.from_iterable([word.lemma_names() for word in synonyms]))
-
-    for s1_lemma in s1_lemmas:
-      for s2_lemma in s2_lemmas:
-        if s1_lemma == s2_lemma:
-          score += 1 
-
+    for lemma in lemmas:
+        if lemma in s1 and lemma in s2:
+            score += 1
+    
     return score
 
 listings = get_listings_from_file()
-for i in range(len(listings.keys())-1):
-    listing1 = listings.keys()[i]
-    listing2 = listings.keys()[i+1]
-    listing1_keywords = zip(*get_most_significant_words(listings, listing1))[0]
-    listing2_keywords = zip(*get_most_significant_words(listings, listing2))[0]
-    for s1 in listings[listing1]:
-      for s2 in listings[listing2]:
-        correlation_score = get_correlation_score(str(s1), listing1_keywords, str(s2), listing2_keywords) 
+keywords = get_most_significant_words(listings)
+for listing_id in listings:
+    for i in range(len(listings[listing_id])-1):
+        review1 = listings[listing_id][i]
+        review2 = listings[listing_id][i+1]
+        correlation_score = get_correlation_score(str(review1), str(review2), zip(*keywords)[0]) 
         if correlation_score > 0:
-          print('Listing 1) %s' % (str(s1)))
-          print('Listing 2) %s' % (str(s2)))
+          print('Review 1) %s' % (str(review1)))
+          print('Review 2) %s' % (str(review2)))
           print('Correlation score: %f' % (correlation_score))
           print('') 

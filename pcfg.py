@@ -5,8 +5,10 @@ import nltk
 import re
 from collections import defaultdict
 import random
+import bigrams
 # This example uses choice to choose from possible expansions
 from random import choice
+
 
 PUNCTUATION_LIST = ['.',',','?','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
 '''
@@ -107,25 +109,49 @@ def tokenModifications(token) :
     token = token.replace('\'ve', ' have')
     return token
 
-string = """
-S -> NP VP [0.5]
-S -> NP VP PP [0.5]
-NP -> NNP [0.01]
-NP -> NP CC NP [0.04]
-NP -> PRP [0.1] 
-NP -> DT NN PP [0.1]
-NP -> DT NNS PP [0.25]
-NP -> DT NN [0.125]
-NP -> DT JJ NN [0.125]
-NP -> DT NNS [0.125]
-NP -> DT JJ NNS [0.125]
-VP -> VB [.125]
-VP -> VBZ [.115]
-VP -> VBD [.01]
-VP -> VB NN [.25]
-VP -> VB NP PP [0.5]
-PP -> IN NP [1.0]
-"""
+#Converted this to a list since it makes it easier later to check
+#if a rule has already been added (and ignore it if so)
+#Commenting out PCFG version for now in case we want it back
+
+ruleList = \
+["S -> NP VP",
+"S -> NP VP PP",
+"NP -> NNP",
+"NP -> NP CC NP",
+"NP -> PRP",
+"NP -> DT NN PP",
+"NP -> DT NNS PP",
+"NP -> DT NN",
+"NP -> DT JJ NN",
+"NP -> DT NNS",
+"NP -> DT JJ NNS",
+"VP -> VB",
+"VP -> VBZ",
+"VP -> VBD",
+"VP -> VB NN",
+"VP -> VB NP PP",
+"PP -> IN NP"]
+
+'''
+ruleList = \
+["S -> NP VP [0.5]",
+"S -> NP VP PP [0.5]",
+"NP -> NNP [0.01]",
+"NP -> NP CC NP [0.04]",
+"NP -> PRP [0.1]",
+"NP -> DT NN PP [0.1]",
+"NP -> DT NNS PP [0.25]",
+"NP -> DT NN [0.125]",
+"NP -> DT JJ NN [0.125]",
+"NP -> DT NNS [0.125]",
+"NP -> DT JJ NNS [0.125]",
+"VP -> VB [.125]",
+"VP -> VBZ [.115]",
+"VP -> VBD [.01]",
+"VP -> VB NN [.25]",
+"VP -> VB NP PP [0.5]",
+"PP -> IN NP [1.0]"]
+'''
 
 
 
@@ -148,40 +174,41 @@ def generate_sample(grammar, items):
 
 
 counterDict = defaultdict(int)
+wordCounterDict = defaultdict(int)
 for pair in nltk.pos_tag(text) :
+    wordCounterDict[pair[0]] += 1
     counterDict[stringModifications(pair[1])] += 1
-
 
 for pair in nltk.pos_tag(text) :
     if pair[1] == "POS" or pair[1] in PUNCTUATION_LIST: #Hack for now
         continue
     second = stringModifications(pair[1])
-    string += second + " -> '" + tokenModifications(pair[0]) + "'\t[" + str(float(1)/counterDict[second]) + "]\n"
+    #rule = second + " -> '" + tokenModifications(pair[0]) + "'\t[" + str(float(1)/counterDict[second]) + "]"
+    rule = second + " -> '" + tokenModifications(pair[0]) + "'"
+    if rule in ruleList :
+        continue
+    ruleList.append(rule)
 
-print string
-#print string
-grammar = nltk.PCFG.fromstring(string)
+grammarString = '\n'.join(ruleList)
+
+#grammar = nltk.PCFG.fromstring(grammarString)
+grammar = nltk.CFG.fromstring(grammarString)
 viterbi_parser = nltk.ViterbiParser(grammar)
 
 NUM_SENTENCES = 5000
 
 #sentences = generate(grammar, n=NUM_SENTENCES, depth = 6)
 sentence = generate_sample(grammar, [nltk.Nonterminal("S")])
-print sentence
-for tree in viterbi_parser.parse(sentence.split()) :
-    print tree.leaves()
+print sentence.split()
+for pair in nltk.pos_tag(sentence.split()) :
+    print pair
+#print sentence
+
+bigramDict = bigrams.find_bigrams('reviews.csv', 2, 5)
+print bigramDict[(u'BEGIN',)]
+#for tree in viterbi_parser.parse(sentence.split()) :
+#    print tree.leaves()
 
 #Part of speech tag again!
 
-#print tree.chomsky_normal_form()
 
-'''
-sentenceList = list(sentences)
-
-for i in range(0, 10) :
-    rand = random.randint(0, NUM_SENTENCES)
-    sentence = sentenceList[rand]
-    print rand, sentence
-    #for tree in viterbi_parser.parse(sentence) :
-    #    print tree
-'''

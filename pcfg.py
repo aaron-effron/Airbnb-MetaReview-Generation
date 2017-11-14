@@ -168,8 +168,13 @@ NUM_SENTENCES = 5000
 #sentences = generate(grammar, n=NUM_SENTENCES, depth = 6)
 sentence = generate_sample(grammar, [nltk.Nonterminal("S")])
 print sentence
-#for tree in viterbi_parser.parse(sentence.split()) :
-#    print tree
+for tree in viterbi_parser.parse(sentence.split()) :
+    print tree.leaves()
+
+#Part of speech tag again!
+
+#print tree.chomsky_normal_form()
+
 '''
 sentenceList = list(sentences)
 

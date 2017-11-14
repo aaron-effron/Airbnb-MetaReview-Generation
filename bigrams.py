@@ -46,7 +46,7 @@ def find_bigrams(file, nplus, num_reviews):
 					# individual letters
 					wordL = []
 					wordL.append(words[j+nplus-1])
-					POS = pos_tag(wordL)[0][1]
+					POS = pos_tag(wordL)[0][1].replace('$', '') #PRP gets a weird $ sign we have to correct for
 					# key is first 3 words (nplus = 4)
 					key = tuple(words[j:j+nplus-1])
 					if key not in bigram_n_prob:
@@ -70,7 +70,6 @@ def find_bigrams(file, nplus, num_reviews):
 		for POS in bigram_n_prob[ngram]:
 			new_bigrams = {}
 			for word in bigram_n_prob[ngram][POS]:
-
 				new_bigrams[word] = bigram_prob[begin][word]
 			bigram_n_prob[ngram][POS] = new_bigrams
 

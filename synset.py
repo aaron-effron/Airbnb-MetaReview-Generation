@@ -28,12 +28,10 @@ def tfidf(word, blob, bloblist):
 
 ######################################################################################
 
-def find_sentence_with_word(word, reviews):
-    for review in reviews:
-        sentences = review.sentences
-        for sentence in sentences:
-            if word in sentence:
-                return sentence
+NUM_COMPARISON_REVIEWS = 5
+MIN_REVIEW_COUNT = 5
+MAX_SAMPLE_LISTINGS = 300
+MAX_SAMPLE_RESULTS = 10
 
 def get_listings_from_file():
   listings = {}
@@ -51,7 +49,7 @@ def get_listings_from_file():
 
   return listings
   
-def get_most_significant_words(listings, listing_id):
+def get_most_significant_words(listings, listing_id):    
     selected_reviews = listings[listing_id]
     comparison_reviews = []
     comparison_review_count = 0
@@ -60,9 +58,9 @@ def get_most_significant_words(listings, listing_id):
     shuffle(listing_ids)
 
     for listing_id in listing_ids:
-        if comparison_review_count == 5:
+        if comparison_review_count == NUM_COMPARISON_REVIEWS:
             break
-        if len(listings[listing_id]) > 5:
+        if len(listings[listing_id]) > MIN_REVIEW_COUNT:
             comparison_reviews += listings[listing_id]
             comparison_review_count += 1
   
@@ -76,7 +74,7 @@ def get_most_significant_words(listings, listing_id):
 def get_correlation_score(r1, r2, keywords):
     synsets = []
     score = 0
-    hits = []
+    hits = set([])
 
     for keyword in keywords:
         synonyms = wn.synsets(keyword)
@@ -84,7 +82,7 @@ def get_correlation_score(r1, r2, keywords):
 
     for keyword, lemmas in synsets:
         if keyword in r1 and keyword in r2:
-            hits.append(keyword)
+            hits.add(keyword)
             score += 2
         num_r1_hits = 0
         num_r2_hits = 0
@@ -97,12 +95,13 @@ def get_correlation_score(r1, r2, keywords):
                 num_r2_hits += 1
                 syn_count += 1
             if syn_count > 0:
-                hits.append(synonym)
+                hits.add(synonym)
         if num_r1_hits > 0 and num_r2_hits > 0:
             score += num_r1_hits + num_r2_hits
 
     return score, hits
 
+# Sample usage:
 listings = get_listings_from_file()
 random_id = listings.keys()[randint(0, len(listings.keys())-1)]
 keywords = get_most_significant_words(listings, random_id)
@@ -110,11 +109,11 @@ results = []
 count = 0
 total = len(listings)
 for listing_id in listings:
-    if count == 300:
+    if count == MAX_SAMPLE_LISTINGS:
         break
     count += 1
-    print('Processing listing %s (%d/%d)...' % (listing_id, count, total))
-    if len(listings[listing_id]) < 5:
+    print('Processing listing %s (%d/%d)...' % (listing_id, count, MAX_SAMPLE_LISTINGS))
+    if len(listings[listing_id]) < MIN_REVIEW_COUNT:
         continue
     for i in range(len(listings[listing_id])):
         for j in range(len(listings[listing_id])):
@@ -125,7 +124,7 @@ for listing_id in listings:
             correlation_score, hits = get_correlation_score(str(review1), str(review2), zip(*keywords)[0]) 
             results.append((listing_id, i, j, correlation_score, hits))
 results.sort(key = lambda r: r[3], reverse=True)
-for i in range(10):
+for i in range(MAX_SAMPLE_RESULTS):
     listing_id, i, j, correlation_score, hits  = results[i]
     review1 = listings[listing_id][i]
     review2 = listings[listing_id][j]

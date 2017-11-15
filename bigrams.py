@@ -5,7 +5,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize, RegexpTokenizer
 from collections import Counter
 
 def parse_reviews(file, num_reviews):
-	reviews = []
+	reviews = {}
 	# should maybe check for validity of file but that can be dealt with later
 	with open(file) as csvfile:
 		reader = csv.DictReader(csvfile)
@@ -13,8 +13,11 @@ def parse_reviews(file, num_reviews):
 		for row in reader:
 			if i == num_reviews:
 				break
-			review = '-BEGIN- '+row['comments'].decode('utf-8')
-			reviews.append(review)
+			review = row['comments'].decode('utf-8')
+			listID = row['listing_id']
+			if listID not in reviews:
+				reviews[listID] = []
+			reviews[listID].append(review)
 			i += 1
 	return reviews
 
@@ -39,29 +42,32 @@ def find_bigrams(reviews, nplus):
 	# contractions
 	tokenizer = RegexpTokenizer(r"\w+'*\w*")
 
-	for review in reviews:
-		rparts = sent_tokenize(review)
-		for sent in rparts:
-			words = tokenizer.tokenize(sent)
-			bigrams = ngrams(words, 2)
-			bigram_counts += Counter(bigrams)
-			word_counts += Counter(words)
-			for j in range(len(words) - nplus):
-				# POS tag last word since it's "added"
-				# Need to make the word a list since if we just 
-				# pass in a word, pos_tag will decompose it into
-				# individual letters
-				wordL = []
-				wordL.append(words[j+nplus-1])
-				POS = pos_tag(wordL)[0][1].replace('$', '') #PRP gets a weird $ sign we have to correct for
-				# key is first 3 words (nplus = 4)
-				key = tuple(words[j:j+nplus-1])
-				if key not in bigram_n_prob:
-					bigram_n_prob[key] = {POS:[words[j+nplus-1]]}
-				else:
-					if POS not in bigram_n_prob[key]:
-						bigram_n_prob[key][POS] = []
-					bigram_n_prob[key][POS].append(words[j+nplus-1])
+	for listID in reviews:
+		for review in reviews[listID]:
+			# need to subtract 2 from nplus since it's n+1
+			review = '-BEGIN- '*(nplus-2) + review
+			rparts = sent_tokenize(review)
+			for sent in rparts:
+				words = tokenizer.tokenize(sent)
+				bigrams = ngrams(words, 2)
+				bigram_counts += Counter(bigrams)
+				word_counts += Counter(words)
+				for j in range(len(words) - nplus):
+					# POS tag last word since it's "added"
+					# Need to make the word a list since if we just 
+					# pass in a word, pos_tag will decompose it into
+					# individual letters
+					wordL = []
+					wordL.append(words[j+nplus-1])
+					POS = pos_tag(wordL)[0][1].replace('$', '') #PRP gets a weird $ sign we have to correct for
+					# key is first 3 words (nplus = 4)
+					key = tuple(words[j:j+nplus-1])
+					if key not in bigram_n_prob:
+						bigram_n_prob[key] = {POS:[words[j+nplus-1]]}
+					else:
+						if POS not in bigram_n_prob[key]:
+							bigram_n_prob[key][POS] = []
+						bigram_n_prob[key][POS].append(words[j+nplus-1])
 
 					
 
@@ -85,4 +91,3 @@ if __name__ == '__main__':
 	reviews = parse_reviews('reviews.csv', 100)
 	print reviews
 	b = find_bigrams(reviews, 4)
-	print b

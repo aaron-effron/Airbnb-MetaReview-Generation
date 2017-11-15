@@ -6,107 +6,22 @@ import re
 from collections import defaultdict
 import random
 import bigrams
-# This example uses choice to choose from possible expansions
 from random import choice
 
-
 PUNCTUATION_LIST = ['.',',','?','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
-'''
-grammar = nltk.PCFG.fromstring("""
-    S    -> NP VP              [1.0]
-    VP   -> TV NP              [0.4]
-    VP   -> IV                 [0.3]
-    VP   -> DatV NP NP         [0.3]
-    TV   -> 'saw'              [1.0]
-    IV   -> 'ate'              [1.0]
-    DatV -> 'gave'             [1.0]
-    NP   -> 'telescopes'       [0.001]
-    NP   -> 'Jack'             [0.999]
-    """)
-viterbi_parser = nltk.ViterbiParser(grammar)
 
-for sentence in generate(grammar, n=10):
-    for tree in viterbi_parser.parse(sentence) :
-        print tree
-
-sent = ['an', 'elephant', 'in', 'my', 'pajamas']
-parser = nltk.ChartParser(groucho_grammar, nltk.parse.BU_STRATEGY)
-trees = parser.nbest_parse(sent, trace=2)
-'''
-
-review = '''My stay at islam's place was really cool! Good location, 
-5min away from subway, then 10min from downtown. The room was nice, all place was clean. 
-Islam managed pretty well our arrival, even if it was last minute ;) i do recommand this 
-place to any airbnb user :)
-
-We really enjoyed our stay at Islams house. From the outside the house didn't look so inviting 
-but the inside was very nice! Even though Islam himself was not there everything was prepared 
-for our arrival. The airport T Station is only a 5-10 min walk away. The only little issue was 
-that all the people in the house had to share one bathroom. But it was not really a problem and 
-it worked out fine. We would recommend Islams place for a stay in Boston. 
-
-The place was really good, it is like 10 minutes from the airport so it was  
-perfect for me because i had a connection flight, the taxi will cost u max 
-15 dolars and if you go by shuttle is free, the house is very clean and the 
-room was very confortable. The only thing is that i arrive and the owner wasnt 
-there and i didnt read the instructions where he told me how to get in the house 
-so i was waiting for about an hour, but if you read the instructions everything 
-will be fine.
-
-The host wasn't there, but it was fine. He left clear instructions, and we spent 
-2 good nights there. It was a room was in a shared house, where there happened to 
-be some interesting people staying, so we got to chat with some awesome people. The 
-neighborhood is ok, had some good Colombian food.
-
-Izzy was quick to reply to our request, and provided thorough instructions 
-related to finding and entering the home. We loved the convenience of the 
-location near the airport, as we weren't familiar with Boston, and landed 
-late at night, so we didn't want to have to travel far or follow complicated directions 
-to find the place. Although we never had any face-to-face contact with Izzy or anyone 
-else in the home during our brief overnight stay, we felt comfortable there. 
-Although we were assured that the neighborhood was safe, we were still feeling a 
-bit on edge walking late at night from the Airport "T" station. Nonetheless, we 
-made our way there without incident, and had a restful night of sleep before 
-launching out the next day. Thanks, Izzy!
-
-I didn't get a chance to meet Izzy but I thought the system that was set up was 
-really well done. Things went quite smoothly upon arrival as per the detailed 
-instructions that were left. 
-
-We managed to get the key from the lock box easily which was nice because it provided 
-flexibility for whatever time we arrived. This place is extremely close to the airport. 
-I've never stayed next door to the airport before. Less than a 5 min ride to Airport 
-Station which was then a 5 min walk.
-
-Place had everything. Felt very homely like staying at a friends. Location was 
-amazing!! East Boston has some hidden gem restaurants and proximity to Airport 
-subway station was key. No complaints about the room or bathroom.
-
-Great setup Izzy!
-
-Izzy's assistant was a nice and helpful person. We stayed 7 days, 
-kitchen had everything one needs to make good food even a mixer! Our 
-room was in the cellar and therefore very private. One fight next door where 
-we heard screaming and shouting but overall a very calm neighbourhood and friendly people.
-
-OK stay.  Perhaps best for those on the young/adventurous side of the spectrum!  
-There was a sign that said in the process of renovations.   I think the second 
-floor might be a little noisy some evenings, with 3 rooms up there. The one lower/ground 
-floor room was quieter, but keep in mind not easily accessible with narrow winding stairs. 
-Futon style bed.     The host was prompt with text message responses to questions about parking.  
-Parking in the neighborhood mid-day was easy but all streets were filled with parked/double parked 
-cars by 5pm.  It was a fairly short walk to the Blue line train line - Airport station. 
-'''
-
-text = nltk.word_tokenize(review)
-
+#Modification for "PRP$" to not have dollar sign
 def stringModifications(string) :
     string = string.replace('$', '')
     return string
 
+#Function to deal with contractions as well as lower case i
 def tokenModifications(token) :
     token = token.replace('n\'t', ' not')
     token = token.replace('\'ve', ' have')
+    token = token.replace('\'ll', ' will')
+    token = token.replace('\'d', ' would')
+    token = token.replace('\'s', ' is')
     if token == 'i' : #Upper case I is properly tagged, whereas lower case is not
         token = "I"
     return token
@@ -116,6 +31,7 @@ def tokenModifications(token) :
 #Commenting out PCFG version for now in case we want it back
 
 #"NP -> NNP" This rule is causing issues
+#This list obviously can be modified
 
 ruleList = \
 ["S -> NP VP",
@@ -156,77 +72,96 @@ ruleList = \
 "PP -> IN NP [1.0]"]
 '''
 
-
-
-# This function is based on _generate_all() in nltk.parse.generate
-# It therefore assumes the same import environment otherwise.
-
-frags = []
-
+#Given a grammar, generate a random sample
 def generate_sample(grammar, items):
 
-    myPart = ""
+    sample = ""
     for item in items: #All symbols to be parsed from a rule passed in
         if isinstance(item, nltk.Nonterminal):
             prodList = [prod.rhs() for prod in grammar.productions(lhs=item)]
             chosen_expansion = choice(prodList)
-            myPart += generate_sample(grammar, list(chosen_expansion))
+            sample += generate_sample(grammar, list(chosen_expansion))
         else:
-            myPart += str(item) + ' '
-    return myPart
+            sample += str(item) + ' '
+    return sample
 
+def create_sentence_from_CFG(num_reviews, nplus) :
 
-counterDict = defaultdict(int)
-wordCounterDict = defaultdict(int)
-for pair in nltk.pos_tag(text) :
-    wordCounterDict[pair[0]] += 1
-    counterDict[stringModifications(pair[1])] += 1
+    #This later can be in some utility
+    reviews = bigrams.parse_reviews('reviews.csv', num_reviews)
+    text = nltk.word_tokenize(''.join(reviews['1178162']))
 
-for pair in nltk.pos_tag(text) :
-    if pair[1] == "POS" or pair[1] in PUNCTUATION_LIST: #Hack for now
-        continue
-    second = stringModifications(pair[1])
-    #rule = second + " -> '" + tokenModifications(pair[0]) + "'\t[" + str(float(1)/counterDict[second]) + "]"
-    rule = second + " -> '" + tokenModifications(pair[0]) + "'"
-    if rule in ruleList :
-        continue
-    ruleList.append(rule)
+    counterDict = defaultdict(int)
+    wordCounterDict = defaultdict(int)
+    for pair in nltk.pos_tag(text) :
+        wordCounterDict[pair[0]] += 1
+        counterDict[stringModifications(pair[1])] += 1
 
-grammarString = '\n'.join(ruleList)
+    for pair in nltk.pos_tag(text) :
+        if pair[1] == "POS" or pair[1] in PUNCTUATION_LIST: #Hack for now
+            continue
+        second = stringModifications(pair[1])
+        if pair[0] == '\'in': #Not sure what this is, but let's ignore for now
+            continue
+        #rule = second + " -> '" + tokenModifications(pair[0]) + "'\t[" + str(float(1)/counterDict[second]) + "]"
+        rule = second + " -> '" + tokenModifications(pair[0]) + "'"
+        if rule in ruleList :
+            continue
+        ruleList.append(rule)
 
-#grammar = nltk.PCFG.fromstring(grammarString)
-grammar = nltk.CFG.fromstring(grammarString)
-viterbi_parser = nltk.ViterbiParser(grammar)
+    grammarString = '\n'.join(ruleList)
 
-NUM_SENTENCES = 5000
+    #grammar = nltk.PCFG.fromstring(grammarString)
+    grammar = nltk.CFG.fromstring(grammarString)#, encoding="utf-8")
+    viterbi_parser = nltk.ViterbiParser(grammar)
 
-#sentences = generate(grammar, n=NUM_SENTENCES, depth = 6)
-sentence = generate_sample(grammar, [nltk.Nonterminal("S")])
+    #sentences = generate(grammar, n=NUM_SENTENCES, depth = 6)
+    sentence = generate_sample(grammar, [nltk.Nonterminal("S")])
 
-posList = []
-for pair in nltk.pos_tag(sentence.split()) :
-    posList.append(pair[1])
-print sentence
+    posList = []
+    for pair in nltk.pos_tag(sentence.split()) :
+        posList.append(pair[1].replace('$', ''))
 
-print posList
-bigramDict = bigrams.find_bigrams('reviews.csv', 2, 300)
+    bigramDict = bigrams.find_bigrams(reviews, nplus)
 
-currentWord = ('BEGIN',)
-#print bigramDict['The',]
-finalSentence = []
-for pos in posList :
-    print currentWord, bigramDict[currentWord], pos
+    #Slight hack, since formatting in bigrams is different based on value of nplus
+    if nplus == 2 :
+        currentWord = ('BEGIN',)
+    else :
+        currentWordList = [ ('BEGIN') for i in range(1, nplus)]
+        currentWord = tuple(currentWordList)
 
-    currentWord = ((bigramDict[currentWord][pos]).keys()[0],)
+    finalSentence = []
+    for pos in posList :
+        if currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
+            if nplus == 2 :
+                currentWord = ((bigramDict[currentWord][pos]).keys()[0],)
+            else : #Have to append everything in current word except for first element.
+                listCur = list(currentWord)
+                newList = listCur[1:]
+                newList.append((bigramDict[currentWord][pos]).keys()[0])
+                currentWord = tuple(newList)
+        else : #No match in bigram dictionary TODO -> Add entry for this when we implement optimization
+            if nplus == 2 :
+                currentWord = (generate_sample(grammar, [nltk.Nonterminal(pos)]),)
+            else :
+                listCur = list(currentWord)
+                newList = listCur[1:]
+                newWord = (generate_sample(grammar, [nltk.Nonterminal(pos)]),)
+                newList.append(newWord)
+                currentWord = tuple(newList)
 
-    finalSentence.append(currentWord[0])
+        finalSentence.append(currentWord[0])
 
-print finalSentence
-    #currentWord = (bigramDict[currentWord][pos][0],)
+    return finalSentence
 
-#for tree in viterbi_parser.parse(sentence.split()) :
-#    print tree.leaves()
-
-#Part of speech tag again!
-
-
+if __name__ == '__main__':
+    finalString = ""
+    finalSentence = create_sentence_from_CFG(50, 3)
+    for word in finalSentence :
+        if word == 'BEGIN' :
+            continue
+        if isinstance(word, tuple) :
+            word = word[0]
+        finalString += word + ' '
+    print finalString

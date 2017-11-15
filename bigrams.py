@@ -44,8 +44,7 @@ def find_bigrams(reviews, nplus):
 
 	for listID in reviews:
 		for review in reviews[listID]:
-			# need to subtract 2 from nplus since it's n+1
-			review = '-BEGIN- '*(nplus-2) + review
+			review = '-BEGIN- '*(nplus-1) + review
 			rparts = sent_tokenize(review)
 			for sent in rparts:
 				words = tokenizer.tokenize(sent)
@@ -89,5 +88,4 @@ def find_bigrams(reviews, nplus):
 
 if __name__ == '__main__':
 	reviews = parse_reviews('reviews.csv', 100)
-	print reviews
 	b = find_bigrams(reviews, 4)

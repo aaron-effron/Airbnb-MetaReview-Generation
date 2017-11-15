@@ -5,6 +5,7 @@ from nltk.collocations import *
 from nltk.corpus import wordnet as wn
 from random import shuffle
 from itertools import chain
+from random import shuffle, randint
 
 ######################################################################################
 
@@ -50,20 +51,20 @@ def get_listings_from_file():
 
   return listings
   
-def get_most_significant_words(listings):
-    selected_reviews = None
+def get_most_significant_words(listings, listing_id):
+    selected_reviews = listings[listing_id]
     comparison_reviews = []
     comparison_review_count = 0
 
-    for listing_id in listings:
+    listing_ids = listings.keys()
+    shuffle(listing_ids)
+
+    for listing_id in listing_ids:
         if comparison_review_count == 5:
             break
         if len(listings[listing_id]) > 5:
-            if selected_reviews == None:
-                selected_reviews = listings[listing_id]
-            else:
-                comparison_reviews += listings[listing_id]
-                comparison_review_count += 1
+            comparison_reviews += listings[listing_id]
+            comparison_review_count += 1
   
     sorted_scores = []
     for i, review in enumerate(selected_reviews):
@@ -103,7 +104,8 @@ def get_correlation_score(r1, r2, keywords):
     return score, hits
 
 listings = get_listings_from_file()
-keywords = get_most_significant_words(listings)
+random_id = listings.keys()[randint(0, len(listings.keys())-1)]
+keywords = get_most_significant_words(listings, random_id)
 results = []
 count = 0
 total = len(listings)

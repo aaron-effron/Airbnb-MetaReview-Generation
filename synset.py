@@ -70,31 +70,67 @@ def get_most_significant_words(listings):
         scores = {word: tfidf(word, review, comparison_reviews) for word in review.words}
         sorted_scores = sorted(scores.items()+sorted_scores, key=lambda x: x[1], reverse=True)
     
-    return sorted_scores[:10]
+    return sorted_scores[:5]
 
-def get_correlation_score(s1, s2, keywords):
-    lemmas = set([])
+def get_correlation_score(r1, r2, keywords):
+    synsets = []
     score = 0
+    hits = []
 
     for keyword in keywords:
         synonyms = wn.synsets(keyword)
-        lemmas |= set(chain.from_iterable([word.lemma_names() for word in synonyms]))
+        synsets.append((keyword, set(chain.from_iterable([word.lemma_names() for word in synonyms]))))
 
-    for lemma in lemmas:
-        if lemma in s1 and lemma in s2:
-            score += 1
-    
-    return score
+    for keyword, lemmas in synsets:
+        if keyword in r1 and keyword in r2:
+            hits.append(keyword)
+            score += 2
+        num_r1_hits = 0
+        num_r2_hits = 0
+        for synonym in lemmas:
+            syn_count = 0
+            if synonym in r1:
+                num_r1_hits += 1
+                syn_count += 1
+            if synonym in r2:
+                num_r2_hits += 1
+                syn_count += 1
+            if syn_count > 0:
+                hits.append(synonym)
+        if num_r1_hits > 0 and num_r2_hits > 0:
+            score += num_r1_hits + num_r2_hits
+
+    return score, hits
 
 listings = get_listings_from_file()
 keywords = get_most_significant_words(listings)
+results = []
+min_correlation_score = float('inf')
+min_index = 0
+count = 0
+total = len(listings)
 for listing_id in listings:
-    for i in range(len(listings[listing_id])-1):
-        review1 = listings[listing_id][i]
-        review2 = listings[listing_id][i+1]
-        correlation_score = get_correlation_score(str(review1), str(review2), zip(*keywords)[0]) 
-        if correlation_score > 0:
-          print('Review 1) %s' % (str(review1)))
-          print('Review 2) %s' % (str(review2)))
-          print('Correlation score: %f' % (correlation_score))
-          print('') 
+    if count == 300:
+        break
+    count += 1
+    print('Processing listing %s (%d/%d)...' % (listing_id, count, total))
+    if len(listings[listing_id]) < 5:
+        continue
+    for i in range(len(listings[listing_id])):
+        for j in range(len(listings[listing_id])):
+            if i == j:
+                continue
+            review1 = listings[listing_id][i]
+            review2 = listings[listing_id][j]
+            correlation_score, hits = get_correlation_score(str(review1), str(review2), zip(*keywords)[0]) 
+            results.append((listing_id, i, j, correlation_score, hits))
+results.sort(key = lambda r: r[3], reverse=True)
+for i in range(10):
+    listing_id, i, j, correlation_score, hits  = results[i]
+    review1 = listings[listing_id][i]
+    review2 = listings[listing_id][j]
+    print('Review 1) %s' % (str(review1)))
+    print('Review 2) %s' % (str(review2)))
+    print('Correlation score: %f' % (correlation_score))
+    print 'Keywords: ', hits
+    print('') 

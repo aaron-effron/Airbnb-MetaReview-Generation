@@ -105,8 +105,6 @@ def get_correlation_score(r1, r2, keywords):
 listings = get_listings_from_file()
 keywords = get_most_significant_words(listings)
 results = []
-min_correlation_score = float('inf')
-min_index = 0
 count = 0
 total = len(listings)
 for listing_id in listings:

@@ -137,7 +137,7 @@ def create_CFG_from_reviews(reviews, reviewId) : #Appending to non-terminal rule
 
     return grammar
 
-def create_sentence_from_CFG(grammar, nplus, bigramDict) :
+def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
 
     #Generate a random sentence from our CFG
     sentence = generate_sample(grammar, [nltk.Nonterminal("S")])
@@ -157,6 +157,10 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict) :
     finalSentence = []
     for pos in posList :
 
+        #If nplus > 2, this is the key we'll lookup for the full dictionary if there's 
+        # no match in the specific dictionary
+        fullLookupKey = (currentWord[-1],)
+    
         #If there is a bigram for the current transition we are considering, follow that
         if currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
             if nplus == 2 :
@@ -171,6 +175,24 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict) :
                 newList = listCur[1:]
                 newList.append(weightedRandomChoice(bigramDict[currentWord][pos]))
                 currentWord = tuple(newList)
+        elif nplus != 2 and \
+        fullLookupKey in fullBigramDict.keys() and pos in fullBigramDict[fullLookupKey].keys() :
+            # There's a match for the full dictionary, so let's add the word and add it to our
+            # set
+            newWord = weightedRandomChoice(fullBigramDict[fullLookupKey][pos])
+
+            if currentWord not in bigramDict :
+                bigramDict[currentWord] = {pos:{newWord: 0.5}}
+            else:
+                if pos not in bigramDict[currentWord]:
+                    bigramDict[currentWord][pos] = {}
+                bigramDict[currentWord][pos][newWord] = 0.5
+            #[pos].append(newWord)
+            listCur = list(currentWord)
+            newList = listCur[1:]
+            newList.append(newWord)
+            currentWord = tuple(newList)
+
         else : 
             #No match in bigram dictionary, choose a random word 
             #TODO -> Add entry for this when we implement optimization
@@ -182,7 +204,7 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict) :
                 newList = listCur[1:]
 
                 #[:-1] since last word has a space after it
-                newWord = (generate_sample(grammar, [nltk.Nonterminal(pos)])[:-1],) 
+                newWord = (generate_sample(grammar, [nltk.Nonterminal(pos)])[:-1]) 
                 newList.append(newWord)
                 currentWord = tuple(newList)
 
@@ -192,15 +214,20 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict) :
 
 if __name__ == '__main__':
 
-    numReviews = 100
-    nplus = 2
+    numReviews = 3
+    nplus = 3
     listingId = '1178162'
     reviews = read_in_reviews(numReviews)
     
-    bigramDict = bigrams.find_bigrams(reviews, nplus)
+    fullBigramDict = bigrams.find_bigrams(reviews, 2) 
+
+    bigramDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus)
+
     grammar = create_CFG_from_reviews(reviews, listingId)
-    finalSentence = create_sentence_from_CFG(grammar, nplus, bigramDict)
+    finalSentence = create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict)
     finalSentenceString = final_sentence_as_string(finalSentence)
+
+    print finalSentenceString
 
     #Correlation score
 
@@ -214,7 +241,7 @@ if __name__ == '__main__':
     for index, review in enumerate(listings[listingId]) :
         correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
         print index, correlation_score, hits
-    
+
 
 
 

@@ -76,16 +76,13 @@ def print_final_sentence(finalSentence) :
         finalString += word + ' '
     print finalString
 
-def read_in_reviews(num_reviews) :
-    reviews = bigrams.parse_reviews('reviews.csv', num_reviews)
+def read_in_reviews(num_reviews, num_listings) :
+    reviews = bigrams.parse_reviews('reviews.csv', num_reviews, num_listings)
     return reviews
 
-def create_sentence_from_CFG(reviews, nplus, bigramDict) :
+def create_sentence_from_CFG(reviewSet, nplus, bigramDict) :
 
-    #This later can be in some utility
-    text = nltk.word_tokenize(''.join(reviews['1178162']))
-
-    for pair in nltk.pos_tag(text) : #Each pair should be (word, posTag)
+    for pair in nltk.pos_tag(reviewSet) : #Each pair should be (word, posTag)
         word, posTag = pair[0], pair[1]
         if posTag == "POS" or posTag in PUNCTUATION_LIST: #Hack for now
             continue
@@ -143,8 +140,11 @@ def create_sentence_from_CFG(reviews, nplus, bigramDict) :
 if __name__ == '__main__':
     numReviews = 50
     nplus = 2
-    reviews = read_in_reviews(numReviews)
-    bigramDict = bigrams.find_bigrams(reviews, nplus)
-    finalSentence = create_sentence_from_CFG(reviews, nplus, bigramDict)
+    numListings = 1
+    listID = '1178162'
+    reviews = read_in_reviews(numReviews, numListings)
+    reviewSet = nltk.word_tokenize(''.join(reviews[listID]))
+    bigramDict = bigrams.find_bigrams(reviews, nplus, listID)
+    finalSentence = create_sentence_from_CFG(reviewSet, nplus, bigramDict)
     print_final_sentence(finalSentence)
     

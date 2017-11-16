@@ -16,6 +16,8 @@ def stringModifications(string) :
     return string
 
 #Function to deal with contractions as well as lower case i
+#NOTE: As written, we still need this, because bigrams.py doesn't do this
+#in file input. 
 def tokenModifications(token) :
     token = token.replace('n\'t', ' not')
     token = token.replace('\'ve', ' have')
@@ -51,27 +53,6 @@ ruleList = \
 "VP -> VB NP PP",
 "PP -> IN NP"]
 
-'''
-ruleList = \
-["S -> NP VP [0.5]",
-"S -> NP VP PP [0.5]",
-"NP -> NNP [0.01]",
-"NP -> NP CC NP [0.04]",
-"NP -> PRP [0.1]",
-"NP -> DT NN PP [0.1]",
-"NP -> DT NNS PP [0.25]",
-"NP -> DT NN [0.125]",
-"NP -> DT JJ NN [0.125]",
-"NP -> DT NNS [0.125]",
-"NP -> DT JJ NNS [0.125]",
-"VP -> VB [.125]",
-"VP -> VBZ [.115]",
-"VP -> VBD [.01]",
-"VP -> VB NN [.25]",
-"VP -> VB NP PP [0.5]",
-"PP -> IN NP [1.0]"]
-'''
-
 #Given a grammar, generate a random sample
 def generate_sample(grammar, items):
 
@@ -85,44 +66,48 @@ def generate_sample(grammar, items):
             sample += str(item) + ' '
     return sample
 
-def create_sentence_from_CFG(num_reviews, nplus) :
+def print_final_sentence(finalSentence) :
+    finalString = ""
+    for word in finalSentence :
+        if word == 'BEGIN' :
+            continue
+        if isinstance(word, tuple) :
+            word = word[0]
+        finalString += word + ' '
+    print finalString
+
+def read_in_reviews(num_reviews) :
+    reviews = bigrams.parse_reviews('reviews.csv', num_reviews)
+    return reviews
+
+def create_sentence_from_CFG(reviews, nplus, bigramDict) :
 
     #This later can be in some utility
-    reviews = bigrams.parse_reviews('reviews.csv', num_reviews)
     text = nltk.word_tokenize(''.join(reviews['1178162']))
 
-    counterDict = defaultdict(int)
-    wordCounterDict = defaultdict(int)
-    for pair in nltk.pos_tag(text) :
-        wordCounterDict[pair[0]] += 1
-        counterDict[stringModifications(pair[1])] += 1
-
-    for pair in nltk.pos_tag(text) :
-        if pair[1] == "POS" or pair[1] in PUNCTUATION_LIST: #Hack for now
+    for pair in nltk.pos_tag(text) : #Each pair should be (word, posTag)
+        word, posTag = pair[0], pair[1]
+        if posTag == "POS" or posTag in PUNCTUATION_LIST: #Hack for now
             continue
-        second = stringModifications(pair[1])
-        if pair[0] == '\'in': #Not sure what this is, but let's ignore for now
+        second = stringModifications(posTag) #To get rid of "$" in PRP$
+        if word == '\'in': #Not sure what this is, but let's ignore for now
             continue
-        #rule = second + " -> '" + tokenModifications(pair[0]) + "'\t[" + str(float(1)/counterDict[second]) + "]"
-        rule = second + " -> '" + tokenModifications(pair[0]) + "'"
-        if rule in ruleList :
+        rule = second + " -> '" + tokenModifications(word) + "'"
+        if rule in ruleList : #If we've already added this rule, don't duplicate
             continue
         ruleList.append(rule)
 
     grammarString = '\n'.join(ruleList)
 
-    #grammar = nltk.PCFG.fromstring(grammarString)
     grammar = nltk.CFG.fromstring(grammarString)#, encoding="utf-8")
-    viterbi_parser = nltk.ViterbiParser(grammar)
 
-    #sentences = generate(grammar, n=NUM_SENTENCES, depth = 6)
+    #Generate a random sentence from our CFG
     sentence = generate_sample(grammar, [nltk.Nonterminal("S")])
 
+    #Part of speech tag the resulting sentence
     posList = []
     for pair in nltk.pos_tag(sentence.split()) :
         posList.append(pair[1].replace('$', ''))
-
-    bigramDict = bigrams.find_bigrams(reviews, nplus)
 
     #Slight hack, since formatting in bigrams is different based on value of nplus
     if nplus == 2 :
@@ -156,12 +141,10 @@ def create_sentence_from_CFG(num_reviews, nplus) :
     return finalSentence
 
 if __name__ == '__main__':
-    finalString = ""
-    finalSentence = create_sentence_from_CFG(50, 3)
-    for word in finalSentence :
-        if word == 'BEGIN' :
-            continue
-        if isinstance(word, tuple) :
-            word = word[0]
-        finalString += word + ' '
-    print finalString
+    numReviews = 50
+    nplus = 2
+    reviews = read_in_reviews(numReviews)
+    bigramDict = bigrams.find_bigrams(reviews, nplus)
+    finalSentence = create_sentence_from_CFG(reviews, nplus, bigramDict)
+    print_final_sentence(finalSentence)
+    

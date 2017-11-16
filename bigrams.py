@@ -6,15 +6,18 @@ from collections import Counter
 from langdetect import detect
 
 PUNCTUATION_LIST = ['.',',','?','!',"'",'"',':',';','-', ')', '(', '``', '\'\'','--']
+MIN_REVIEW_COUNT = 100
+MIN_COMPARISON_LISTING_COUNT = 5
 
-def parse_reviews(file, num_reviews):
+def parse_reviews(file, min_reviews, min_listings):
 	reviews = {}
 	# should maybe check for validity of file but that can be dealt with later
 	with open(file) as csvfile:
 		reader = csv.DictReader(csvfile)
-		i = 0
+		num_listings = 0
+		num_reviews = 0
 		for row in reader:
-			if i == num_reviews:
+			if num_reviews >= min_reviews and num_listings >= min_listings:
 				break
 			review = row['comments'].decode('utf-8')
 			if detect(review) != 'en':
@@ -22,9 +25,10 @@ def parse_reviews(file, num_reviews):
 			review = review.replace('.', '. ')
 			listID = row['listing_id']
 			if listID not in reviews:
+				num_listings += 1
 				reviews[listID] = []
 			reviews[listID].append(review)
-			i += 1
+			num_reviews += 1
 	return reviews
 
 #Function to deal with contractions as well as lower case i
@@ -111,5 +115,5 @@ def find_bigrams(reviews, nplus):
 	return bigram_n_prob
 
 if __name__ == '__main__':
-	reviews = parse_reviews('reviews.csv', 100)
+	reviews = parse_reviews('reviews.csv', MIN_REVIEW_COUNT, MIN_COMPARISON_LISTING_COUNT+1)
 	b = find_bigrams(reviews, 4)

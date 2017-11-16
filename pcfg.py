@@ -6,6 +6,7 @@ import re
 from collections import defaultdict
 import random
 import bigrams
+import synset
 from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
@@ -88,7 +89,7 @@ def generate_sample(grammar, items):
             sample += str(item) + ' '
     return sample
 
-def print_final_sentence(finalSentence) :
+def final_sentence_as_string(finalSentence) :
     finalString = ""
     for word in finalSentence :
         if word == '-BEGIN-' :
@@ -96,7 +97,7 @@ def print_final_sentence(finalSentence) :
         if isinstance(word, tuple) :
             word = word[0]
         finalString += word + ' '
-    print finalString
+    return finalString
 
 def read_in_reviews(num_reviews) :
     reviews = bigrams.parse_reviews('reviews.csv', num_reviews)
@@ -179,11 +180,29 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict) :
     return finalSentence
 
 if __name__ == '__main__':
+
     numReviews = 100
     nplus = 2
+    listingId = '1178162'
     reviews = read_in_reviews(numReviews)
     bigramDict = bigrams.find_bigrams(reviews, nplus)
-    grammar = create_CFG_from_reviews(reviews, '1178162')
+    grammar = create_CFG_from_reviews(reviews, listingId)
     finalSentence = create_sentence_from_CFG(grammar, nplus, bigramDict)
-    print_final_sentence(finalSentence)
+    finalSentenceString = final_sentence_as_string(finalSentence)
+    
+    #Correlation score
+
+    #TODO: This is slow and inefficient, we really should only have file-reading
+    #in one place.  Would be great if Keshav and Sophia can discuss how to 
+    # consolidate their file reading functions into one.
+    listings = synset.get_listings_from_file()
+    keywords = synset.get_most_significant_words(listings, listingId)
+
+    for index, review in enumerate(listings[listingId]) :
+        correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
+        print index, correlation_score, hits
+
+
+
+    #print_final_sentence(finalSentence)
     

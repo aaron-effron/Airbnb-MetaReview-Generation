@@ -1,8 +1,11 @@
 import csv
 from nltk import word_tokenize, pos_tag
 from nltk.util import ngrams
-from nltk.tokenize import sent_tokenize, word_tokenize, RegexpTokenizer
+from nltk.tokenize import sent_tokenize, RegexpTokenizer
 from collections import Counter
+from langdetect import detect
+
+PUNCTUATION_LIST = ['.',',','?','!',"'",'"',':',';','-', ')', '(', '``', '\'\'','--']
 
 def parse_reviews(file, num_reviews):
 	reviews = {}
@@ -14,12 +17,26 @@ def parse_reviews(file, num_reviews):
 			if i == num_reviews:
 				break
 			review = row['comments'].decode('utf-8')
+			if detect(review) != 'en':
+				continue
+			review = review.replace('.', '. ')
 			listID = row['listing_id']
 			if listID not in reviews:
 				reviews[listID] = []
 			reviews[listID].append(review)
 			i += 1
 	return reviews
+
+#Function to deal with contractions as well as lower case i
+def tokenModifications(token) :
+    token = token.replace('n\'t', ' not')
+    token = token.replace('\'ve', ' have')
+    token = token.replace('\'ll', ' will')
+    token = token.replace('\'d', ' would')
+    token = token.replace('\'s', ' is')
+    if token == 'i' : #Upper case I is properly tagged, whereas lower case is not
+        token = "I"
+    return token
 
 # Find the bigrams within the review file. 
 # Args:
@@ -40,14 +57,21 @@ def find_bigrams(reviews, nplus):
 
 	# Tokenizer to find words but ignore any punctuation other than ' for 
 	# contractions
-	tokenizer = RegexpTokenizer(r"\w+'*\w*")
+	#tokenizer = RegexpTokenizer(r"\w+'*\w*")
+	#tokenizer = RegexpTokenizer(r"\w+")
 
 	for listID in reviews:
 		for review in reviews[listID]:
-			review = '-BEGIN- '*(nplus-1) + review
+			#review = '-BEGIN- '*(nplus-1) + review
 			rparts = sent_tokenize(review)
 			for sent in rparts:
-				words = tokenizer.tokenize(sent)
+				words = word_tokenize(sent)
+				words = [x for x in words if x not in PUNCTUATION_LIST]
+				if words == []:
+					continue
+				words = [u'-BEGIN-']*(nplus-1) + words
+				for w in range(len(words)):
+					words[w] = tokenModifications(words[w])
 				bigrams = ngrams(words, 2)
 				bigram_counts += Counter(bigrams)
 				word_counts += Counter(words)

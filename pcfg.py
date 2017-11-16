@@ -62,7 +62,7 @@ ruleList = \
 ["S -> NP VP",
 "S -> NP VP PP",
 "NP -> NP CC NP",
-"NP -> PRP",
+"NP -> PRP NN",
 "NP -> DT NN PP",
 "NP -> DT NNS PP",
 "NP -> DT NN",
@@ -74,7 +74,18 @@ ruleList = \
 "VP -> VBD",
 "VP -> VB NN",
 "VP -> VB NP PP",
-"PP -> IN NP"]
+"PP -> IN DT NP"]
+
+#Trying to make the CFG more diverse
+ruleList.append("VP -> VBD RB JJ")
+ruleList.append("VP -> VBD JJ")
+ruleList.append("NP -> JJ NNS")
+ruleList.append("NP -> CD NNS")
+ruleList.append("NP -> NP IN PP")
+ruleList.append("S -> NP CC NP")
+ruleList.append("VP -> VP TO VP")
+ruleList.append("VP -> VP TO NP")
+ruleList.append("NP -> NNP")
 
 #Given a grammar, generate a random sample
 def generate_sample(grammar, items):
@@ -185,22 +196,25 @@ if __name__ == '__main__':
     nplus = 2
     listingId = '1178162'
     reviews = read_in_reviews(numReviews)
+    
     bigramDict = bigrams.find_bigrams(reviews, nplus)
     grammar = create_CFG_from_reviews(reviews, listingId)
     finalSentence = create_sentence_from_CFG(grammar, nplus, bigramDict)
     finalSentenceString = final_sentence_as_string(finalSentence)
-    
+
     #Correlation score
 
     #TODO: This is slow and inefficient, we really should only have file-reading
     #in one place.  Would be great if Keshav and Sophia can discuss how to 
     # consolidate their file reading functions into one.
+    
     listings = synset.get_listings_from_file()
     keywords = synset.get_most_significant_words(listings, listingId)
 
     for index, review in enumerate(listings[listingId]) :
         correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
         print index, correlation_score, hits
+    
 
 
 

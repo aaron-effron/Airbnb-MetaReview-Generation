@@ -85,10 +85,10 @@ def generate_sample(grammar, items):
             sample += str(item) + ' '
     return sample
 
-def create_sentence_from_CFG(num_reviews, nplus) :
+def create_sentence_from_CFG(num_reviews, num_listings, nplus, listID) :
 
     #This later can be in some utility
-    reviews = bigrams.parse_reviews('reviews.csv', num_reviews)
+    reviews = bigrams.parse_reviews('reviews.csv', num_reviews, num_listings)
     text = nltk.word_tokenize(''.join(reviews['1178162']))
 
     counterDict = defaultdict(int)
@@ -122,7 +122,7 @@ def create_sentence_from_CFG(num_reviews, nplus) :
     for pair in nltk.pos_tag(sentence.split()) :
         posList.append(pair[1].replace('$', ''))
 
-    bigramDict = bigrams.find_bigrams(reviews, nplus)
+    bigramDict = bigrams.find_bigrams(reviews, nplus, listID)
 
     #Slight hack, since formatting in bigrams is different based on value of nplus
     if nplus == 2 :
@@ -157,7 +157,7 @@ def create_sentence_from_CFG(num_reviews, nplus) :
 
 if __name__ == '__main__':
     finalString = ""
-    finalSentence = create_sentence_from_CFG(50, 3)
+    finalSentence = create_sentence_from_CFG(50, 6, 3, '1178162')
     for word in finalSentence :
         if word == 'BEGIN' :
             continue

@@ -51,6 +51,7 @@ def tokenModifications(token) :
     token = token.replace('\'d', ' would')
     token = token.replace('\'re', ' are')
     token = token.replace('\'s', ' is')
+    token = token.replace('\'m', ' am')
     token = token.replace('airbnb\'ers', 'airbnbers')
     if token == 'i' : #Upper case I is properly tagged, whereas lower case is not
         token = "I"
@@ -124,7 +125,7 @@ def create_CFG_from_reviews(reviews, reviewId) : #Appending to non-terminal rule
         if posTag == "POS" or posTag in PUNCTUATION_LIST: #Hack for now
             continue
         second = stringModifications(posTag) #To get rid of "$" in PRP$
-        if word == '\'in' or word == '\'m': #Not sure what this is, but let's ignore for now
+        if word == '\'in':# or word == '\'m': #Not sure what this is, but let's ignore for now
             continue
         rule = second + " -> '" + tokenModifications(word) + "'"
         if rule in ruleList : #If we've already added this rule, don't duplicate
@@ -214,7 +215,7 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
 
 if __name__ == '__main__':
 
-    numReviews = 3
+    numReviews = 100
     nplus = 3
     listingId = '1178162'
     reviews = read_in_reviews(numReviews)
@@ -234,13 +235,14 @@ if __name__ == '__main__':
     #TODO: This is slow and inefficient, we really should only have file-reading
     #in one place.  Would be great if Keshav and Sophia can discuss how to 
     # consolidate their file reading functions into one.
-    
+    '''
     listings = synset.get_listings_from_file()
     keywords = synset.get_most_significant_words(listings, listingId)
 
     for index, review in enumerate(listings[listingId]) :
         correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
         print index, correlation_score, hits
+    '''
 
 
 

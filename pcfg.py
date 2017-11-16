@@ -1,4 +1,13 @@
-
+###SC: general comments
+###SC: Might be nice to have some more comments. Still not super sure what some
+###     of this stuff does but from what I did understand it sems good
+###SC: Also, is this eventually supposed to turn into our MDP? Because the last
+###     part where you're actually generating random sentences seems to be 
+###     sort of like the MDP, in which case we might want to start thinking
+###     about explicitly formatting stuff to be "states", "actions", "transition
+###     probability", and eventually "reward" when we get the correlation in.
+###     And, we might want to split that part out so it's explicit what our
+###     MDP is
 from nltk.parse.generate import generate, demo_grammar
 from nltk import PCFG
 import nltk
@@ -16,6 +25,7 @@ def stringModifications(string) :
     return string
 
 #Function to deal with contractions as well as lower case i
+###SC: moved to bigrams.py
 def tokenModifications(token) :
     token = token.replace('n\'t', ' not')
     token = token.replace('\'ve', ' have')
@@ -118,10 +128,20 @@ def create_sentence_from_CFG(num_reviews, nplus) :
     #sentences = generate(grammar, n=NUM_SENTENCES, depth = 6)
     sentence = generate_sample(grammar, [nltk.Nonterminal("S")])
 
+    ###SC: Just to make sure I understand, grammar is the random grammar
+    ###     you generated, and posList is now the "empty" grammar we are going
+    ###     to fill with our MDP?
+
     posList = []
     for pair in nltk.pos_tag(sentence.split()) :
         posList.append(pair[1].replace('$', ''))
 
+    ###SC: I think my bigram dict matches up with how you generate your posList
+    ###     However, one thing to consider when we have more time is that a lot
+    ###     of these processes overlap (i.e. i do some of the same things in
+    ###     bigrams). It's not an urgent fix and I think we should focus on 
+    ###     getting something done for the report for now but it's something
+    ###     to keep in mind for the future
     bigramDict = bigrams.find_bigrams(reviews, nplus)
 
     #Slight hack, since formatting in bigrams is different based on value of nplus
@@ -137,6 +157,7 @@ def create_sentence_from_CFG(num_reviews, nplus) :
             if nplus == 2 :
                 currentWord = ((bigramDict[currentWord][pos]).keys()[0],)
             else : #Have to append everything in current word except for first element.
+            ###SC: not sure what this means?
                 listCur = list(currentWord)
                 newList = listCur[1:]
                 newList.append((bigramDict[currentWord][pos]).keys()[0])

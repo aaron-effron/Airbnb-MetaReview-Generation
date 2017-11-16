@@ -102,34 +102,35 @@ def get_correlation_score(r1, r2, keywords):
     return score, hits
 
 # Sample usage:
-listings = get_listings_from_file()
-random_id = listings.keys()[randint(0, len(listings.keys())-1)]
-keywords = get_most_significant_words(listings, random_id)
-results = []
-count = 0
-total = len(listings)
-for listing_id in listings:
-    if count == MAX_SAMPLE_LISTINGS:
-        break
-    count += 1
-    print('Processing listing %s (%d/%d)...' % (listing_id, count, MAX_SAMPLE_LISTINGS))
-    if len(listings[listing_id]) < MIN_REVIEW_COUNT:
-        continue
-    for i in range(len(listings[listing_id])):
-        for j in range(len(listings[listing_id])):
-            if i == j:
-                continue
-            review1 = listings[listing_id][i]
-            review2 = listings[listing_id][j]
-            correlation_score, hits = get_correlation_score(str(review1), str(review2), zip(*keywords)[0]) 
-            results.append((listing_id, i, j, correlation_score, hits))
-results.sort(key = lambda r: r[3], reverse=True)
-for i in range(MAX_SAMPLE_RESULTS):
-    listing_id, i, j, correlation_score, hits  = results[i]
-    review1 = listings[listing_id][i]
-    review2 = listings[listing_id][j]
-    print('Review 1) %s' % (str(review1)))
-    print('Review 2) %s' % (str(review2)))
-    print('Correlation score: %f' % (correlation_score))
-    print 'Keywords: ', hits
-    print('') 
+if __name__ == '__main__':
+    listings = get_listings_from_file()
+    random_id = listings.keys()[randint(0, len(listings.keys())-1)]
+    keywords = get_most_significant_words(listings, random_id)
+    results = []
+    count = 0
+    total = len(listings)
+    for listing_id in listings:
+        if count == MAX_SAMPLE_LISTINGS:
+            break
+        count += 1
+        print('Processing listing %s (%d/%d)...' % (listing_id, count, MAX_SAMPLE_LISTINGS))
+        if len(listings[listing_id]) < MIN_REVIEW_COUNT:
+            continue
+        for i in range(len(listings[listing_id])):
+            for j in range(len(listings[listing_id])):
+                if i == j:
+                    continue
+                review1 = listings[listing_id][i]
+                review2 = listings[listing_id][j]
+                correlation_score, hits = get_correlation_score(str(review1), str(review2), zip(*keywords)[0]) 
+                results.append((listing_id, i, j, correlation_score, hits))
+    results.sort(key = lambda r: r[3], reverse=True)
+    for i in range(MAX_SAMPLE_RESULTS):
+        listing_id, i, j, correlation_score, hits  = results[i]
+        review1 = listings[listing_id][i]
+        review2 = listings[listing_id][j]
+        print('Review 1) %s' % (str(review1)))
+        print('Review 2) %s' % (str(review2)))
+        print('Correlation score: %f' % (correlation_score))
+        print 'Keywords: ', hits
+        print('') 

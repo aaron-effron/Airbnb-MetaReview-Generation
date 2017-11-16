@@ -39,7 +39,7 @@ def parse_reviews(file, num_reviews, num_listings):
 			if listID not in reviews and len(reviews.keys()) < num_listings:
 				reviews[listID] = []
 				review_counts[listID] = 0
-			if listID in reviews and len(reviews[listID]) < num_reviews:
+			if listID in reviews and len(reviews[listID]) < num_reviews: #TODO: This should be else
 				reviews[listID].append(review)
 				review_counts[listID] += 1
 	return reviews

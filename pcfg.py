@@ -212,9 +212,9 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
     return finalSentence
 
 if __name__ == '__main__':
-    numReviews = 80
+    numReviews = 100
     nplus = 3
-    numListings = 1
+    numListings = 10
     listingID = '1178162'
 
     reviews = read_in_reviews(numReviews, numListings)

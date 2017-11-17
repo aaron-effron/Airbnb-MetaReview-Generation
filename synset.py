@@ -33,23 +33,15 @@ MIN_REVIEW_COUNT = 5
 MAX_SAMPLE_LISTINGS = 300
 MAX_SAMPLE_RESULTS = 10
 
-def get_listings_from_file():
-  listings = {}
-
-  with open('reviews.csv', 'rb') as csvfile:
-      reader = csv.reader(csvfile)
-      next(reader, None) # skip header
-      for row in reader:
-          listing_id = row[0]
-          comments = tb(row[5].decode('unicode_escape').encode('ascii','ignore')).lower()
-          if listing_id not in listings:
-              listings[listing_id] = [comments]
-          else:
-              listings[listing_id].append(comments)
-
-  return listings
+def convert_review_to_text_blobs(reviews):
+    listings = {}
+    for listID in reviews:
+        listings[listID] = [tb(review) for review in reviews[listID]]
+    return listings
   
-def get_most_significant_words(listings, listing_id):    
+def get_most_significant_words(reviews, listing_id):
+
+    listings = convert_review_to_text_blobs(reviews)
     selected_reviews = listings[listing_id]
     comparison_reviews = []
     comparison_review_count = 0

@@ -213,7 +213,7 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
 if __name__ == '__main__':
     numReviews = 100
     nplus = 3
-    numListings = 1
+    numListings = 10
     listingID = '1178162'
 
     reviews = read_in_reviews(numReviews, numListings)
@@ -231,20 +231,12 @@ if __name__ == '__main__':
 
     #Correlation score
 
-    #TODO: This is slow and inefficient, we really should only have file-reading
-    #in one place.  Would be great if Keshav and Sophia can discuss how to 
-    # consolidate their file reading functions into one.
-    '''
-    listings = synset.get_listings_from_file()
-    keywords = synset.get_most_significant_words(listings, listingId)
+    keywords = synset.get_most_significant_words(reviews, listingID)
 
-    for index, review in enumerate(listings[listingId]) :
+    for index, review in enumerate(reviews[listingID]) :
+        print finalSentenceString, review
         correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
         print index, correlation_score, hits
-    '''
-
-
-
 
     #print_final_sentence(finalSentence)
     

@@ -42,6 +42,7 @@ def convert_review_to_text_blobs(reviews):
             new_rev = ''
             sentences = parsing.parse_sentences(review)
             for sent in sentences:
+                #print "Sentence: ", sent
                 sent = ' '.join(sent)
                 if new_rev != '':
                     new_rev += '. '
@@ -53,6 +54,7 @@ def convert_review_to_text_blobs(reviews):
 def get_most_significant_words(reviews, listing_id):
 
     listings = convert_review_to_text_blobs(reviews)
+
     selected_reviews = listings[listing_id]
     comparison_reviews = []
     comparison_review_count = 0

@@ -212,9 +212,9 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
     return finalSentence
 
 if __name__ == '__main__':
-    numReviews = 100
+    numReviews = 80
     nplus = 3
-    numListings = 10
+    numListings = 1
     listingID = '1178162'
 
     reviews = read_in_reviews(numReviews, numListings)
@@ -234,12 +234,13 @@ if __name__ == '__main__':
 
     print finalSentenceString
 
+    listings = synset.convert_review_to_text_blobs(reviews)
+
     #Correlation score
 
     keywords = synset.get_most_significant_words(reviews, listingID)
 
-    for index, review in enumerate(reviews[listingID]) :
-        print finalSentenceString, review
+    for index, review in enumerate(listings[listingID]) :
         correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
         print index, correlation_score, hits
 

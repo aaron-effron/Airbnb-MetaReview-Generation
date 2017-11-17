@@ -87,7 +87,15 @@ ruleList.append("NP -> NP IN PP")
 ruleList.append("S -> NP CC NP")
 ruleList.append("VP -> VP TO VP")
 ruleList.append("VP -> VP TO NP")
-ruleList.append("NP -> NNP")
+#ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
+
+numReviews = 100
+nplus = 3
+numListings = 10
+listingID = '1178162'
+reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
+fullBigramDict = bigrams.find_bigrams(reviews, 2, listingID) 
+bigramDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
 
 #Given a grammar, generate a random sample
 def generate_sample(grammar, items):
@@ -96,6 +104,9 @@ def generate_sample(grammar, items):
     for item in items: #All symbols to be parsed from a rule passed in
         if isinstance(item, nltk.Nonterminal):
             prodList = [prod.rhs() for prod in grammar.productions(lhs=item)]
+            if not prodList :
+                continue
+                #return False #I don't know why this happens, but this fixes
             chosen_expansion = choice(prodList)
             sample += generate_sample(grammar, list(chosen_expansion))
         else:
@@ -111,10 +122,6 @@ def final_sentence_as_string(finalSentence) :
             word = word[0]
         finalString += word + ' '
     return finalString
-
-def read_in_reviews(num_reviews, num_listings) :
-    reviews = parsing.parse_reviews('reviews.csv', num_reviews, num_listings)
-    return reviews
 
 def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules defined globally
 
@@ -209,40 +216,61 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
 
         finalSentence.append(currentWord[0])
 
-    return finalSentence
+    return finalSentence, posList
 
 if __name__ == '__main__':
-    numReviews = 100
-    nplus = 3
-    numListings = 10
-    listingID = '1178162'
-
-    reviews = read_in_reviews(numReviews, numListings)
     reviewSet = []
     for review in reviews[listingID]:
         sents = parsing.parse_sentences(review)
         for sent in sents:
             reviewSet += sent
     grammar = create_CFG_from_reviews(reviewSet)
-
-    fullBigramDict = bigrams.find_bigrams(reviews, 2, listingID) 
-    bigramDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
     
-    finalSentence = create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict)
-
-    finalSentenceString = final_sentence_as_string(finalSentence)
-
-    print finalSentenceString
-
     listings = synset.convert_review_to_text_blobs(reviews)
 
     #Correlation score
 
     keywords = synset.get_most_significant_words(reviews, listingID)
 
-    for index, review in enumerate(listings[listingID]) :
-        correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
-        print index, correlation_score, hits
+    numReviews = len(listings[listingID])
+
+    NUM_ITERS = 10000
+    for i in range(0, NUM_ITERS) :
+        correlationScore = 0
+        finalSentence, posList = create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict)
+        
+        finalSentenceString = final_sentence_as_string(finalSentence)
+
+        for index, review in enumerate(listings[listingID]) :
+            correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
+            correlationScore += correlation_score
+
+        #Update weights
+        avgCorrelation = float(correlationScore) / numReviews
+
+        key = [ ((finalSentence[i])) for i in range(0, nplus - 1)]
+        key = tuple(key)
+        for k in range(nplus - 1, len(finalSentence)) :
+            word = finalSentence[k]
+            pos = posList[k - (nplus - 2)]
+            
+            #Part of speech tagging is annoyingly sentence dependent, and thus we need this separation
+            #TODO : Fix this hack to deal with random cases
+            if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
+                #TODO: This can obviously be made more complex
+                if avgCorrelation > 0.7 :
+                    bigramDict[key][pos][word] *= 1.1
+                else :
+                    bigramDict[key][pos][word] *= .9
+
+            listCur = list(key)
+            newList = listCur[1:]
+            newList.append(word)
+            key = tuple(newList)
+
+        #for index, word in enumerate
+            if avgCorrelation > 1 :
+                print "Average correlation for {} is {}".format(finalSentenceString, float(correlationScore) / numReviews)
 
     #print_final_sentence(finalSentence)
     

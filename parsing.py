@@ -67,13 +67,13 @@ def parse_sentences(review):
         to_delete = []
         for w in range(len(words)):
             if repr(words[w]).find('\u2026') != -1 : #unicode character that tries to mess everything up
-                #Hack to just delete this for now
-                to_delete.append(w)
-                continue
+                index = repr(words[w]).find('\u2026')
+                words[w] = words[w][:index - 2] #... is stupid
             if words[w].find(u'\xb4') != -1: #unicode character that tries to mess everything up
-                #Hack to just delete this for now
-                to_delete.append(w)
-                continue
+                words[w] = words[w].replace(u'\xb4', '\'')
+
+            #Cafe with the accent
+            words[w] = words[w].replace(u'\xe9', 'e')
 
             if words[w] == '\'s' and words[w-1] == 'there' and w != 0:
                 words[w-1] = 'there\'s'
@@ -84,7 +84,7 @@ def parse_sentences(review):
             words[w] = tokenModifications(words[w])
         numIter = 0
         for num in to_delete:
-            del words[num-numIter]
-            numIter += 1
+            del words[num-numIter] #numIter is crucial, since the array changes when we delete!!
+            numIter += 1 
         sentences.append(words)
     return sentences

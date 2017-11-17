@@ -214,7 +214,7 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
                 newList.append(newWord)
                 currentWord = tuple(newList)
 
-        finalSentence.append(currentWord[0])
+        finalSentence.append(currentWord[-1])
 
     return finalSentence, posList
 
@@ -269,8 +269,8 @@ if __name__ == '__main__':
             key = tuple(newList)
 
         #for index, word in enumerate
-            if avgCorrelation > 1 :
-                print "Average correlation for {} is {}".format(finalSentenceString, float(correlationScore) / numReviews)
+        if avgCorrelation > 1 :
+            print "Average correlation for {} is {}".format(finalSentenceString, float(correlationScore) / numReviews)
 
     #print_final_sentence(finalSentence)
     

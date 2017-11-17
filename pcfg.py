@@ -7,6 +7,7 @@ from collections import defaultdict
 import random
 import bigrams
 import synset
+import parsing
 from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
@@ -112,7 +113,7 @@ def final_sentence_as_string(finalSentence) :
     return finalString
 
 def read_in_reviews(num_reviews, num_listings) :
-    reviews = bigrams.parse_reviews('reviews.csv', num_reviews, num_listings)
+    reviews = parsing.parse_reviews('reviews.csv', num_reviews, num_listings)
     return reviews
 
 def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules defined globally
@@ -217,7 +218,11 @@ if __name__ == '__main__':
     listingID = '1178162'
 
     reviews = read_in_reviews(numReviews, numListings)
-    reviewSet = nltk.word_tokenize(''.join(reviews[listingID]))
+    reviewSet = []
+    for review in reviews[listingID]:
+        sents = parsing.parse_sentences(review)
+        for sent in sents:
+            reviewSet += sent
     grammar = create_CFG_from_reviews(reviewSet)
 
     fullBigramDict = bigrams.find_bigrams(reviews, 2, listingID) 

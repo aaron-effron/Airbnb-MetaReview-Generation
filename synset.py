@@ -6,6 +6,7 @@ from nltk.corpus import wordnet as wn
 from random import shuffle
 from itertools import chain
 from random import shuffle, randint
+import parsing
 
 ######################################################################################
 
@@ -36,7 +37,17 @@ MAX_SAMPLE_RESULTS = 10
 def convert_review_to_text_blobs(reviews):
     listings = {}
     for listID in reviews:
-        listings[listID] = [tb(review) for review in reviews[listID]]
+        listings[listID] = []
+        for review in reviews[listID]:
+            new_rev = ''
+            sentences = parsing.parse_sentences(review)
+            for sent in sentences:
+                sent = ' '.join(sent)
+                if new_rev != '':
+                    new_rev += '. '
+                new_rev += sent
+            listings[listID].append(tb(new_rev))
+        #listings[listID] = [tb(review) for review in reviews[listID]]
     return listings
   
 def get_most_significant_words(reviews, listing_id):

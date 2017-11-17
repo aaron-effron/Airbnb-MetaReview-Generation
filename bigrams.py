@@ -4,57 +4,12 @@ from nltk.util import ngrams
 from nltk.tokenize import sent_tokenize, RegexpTokenizer
 from collections import Counter
 from langdetect import detect, lang_detect_exception
+from parsing import parse_sentences, parse_reviews
 
-PUNCTUATION_LIST = ['.',',','?','!',"'",'"',':',';','-', ')', '(', '``', '\'\'','--']
+
 REVIEW_COUNT = 100
 COMPARISON_LISTING_COUNT = 5
 
-def parse_reviews(file, num_reviews, num_listings):
-	reviews = {}
-	review_counts = {}
-
-	def check_finished_parsing(review_counts):
-		if len(review_counts.keys()) < num_listings:
-			return False
-		for listID in review_counts:
-			if review_counts[listID] >= num_reviews:
-				return True
-		return False
-
-	# should maybe check for validity of file but that can be dealt with later
-	with open(file) as csvfile:
-		reader = csv.DictReader(csvfile)
-		for row in reader:
-			if check_finished_parsing(review_counts):
-				break
-
-			review = row['comments'].decode('utf-8')
-			try: 
-				if detect(review) != 'en':
-					continue
-			except lang_detect_exception.LangDetectException:
-				continue
-			review = review.replace('.', '. ')
-			listID = row['listing_id']
-			if listID not in reviews and len(reviews.keys()) < num_listings:
-				reviews[listID] = []
-				review_counts[listID] = 0
-			if listID in reviews and len(reviews[listID]) < num_reviews: #TODO: This should be else
-				reviews[listID].append(review)
-				review_counts[listID] += 1
-	return reviews
-
-#Function to deal with contractions as well as lower case i
-def tokenModifications(token) :
-	token = token.replace('n\'t', ' not')
-	token = token.replace('\'ve', ' have')
-	token = token.replace('\'ll', ' will')
-	token = token.replace('\'d', ' would')
-	token = token.replace('\'s', ' is')
-	token = token.replace('\'m', ' am')
-	if token == 'i' : #Upper case I is properly tagged, whereas lower case is not
-		token = "I"
-	return token
 
 # Find the bigrams within the review file. 
 # Args:
@@ -80,15 +35,10 @@ def find_bigrams(reviews, nplus, listID):
 
 	for review in reviews[listID]:
 		#review = '-BEGIN- '*(nplus-1) + review
-		rparts = sent_tokenize(review)
-		for sent in rparts:
-			words = word_tokenize(sent)
-			words = [x for x in words if x not in PUNCTUATION_LIST]
-			if words == []:
-				continue
+		sents = parse_sentences(review)
+		for words in sents:
+
 			words = [u'-BEGIN-']*(nplus-1) + words
-			for w in range(len(words)):
-				words[w] = tokenModifications(words[w])
 			bigrams = ngrams(words, 2)
 			bigram_counts += Counter(bigrams)
 			word_counts += Counter(words)
@@ -129,4 +79,4 @@ def find_bigrams(reviews, nplus, listID):
 
 if __name__ == '__main__':
 	reviews = parse_reviews('reviews.csv', REVIEW_COUNT, COMPARISON_LISTING_COUNT+1)
-	b = find_bigrams(reviews, 4, 1178162)
+	b = find_bigrams(reviews, 4, '1178162')

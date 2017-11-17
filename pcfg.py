@@ -7,6 +7,7 @@ from collections import defaultdict
 import random
 import bigrams
 import synset
+import parsing
 from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
@@ -112,7 +113,7 @@ def final_sentence_as_string(finalSentence) :
     return finalString
 
 def read_in_reviews(num_reviews, num_listings) :
-    reviews = bigrams.parse_reviews('reviews.csv', num_reviews, num_listings)
+    reviews = parsing.parse_reviews('reviews.csv', num_reviews, num_listings)
     return reviews
 
 def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules defined globally
@@ -211,13 +212,17 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
     return finalSentence
 
 if __name__ == '__main__':
-    numReviews = 100
+    numReviews = 80
     nplus = 3
-    numListings = 10
+    numListings = 1
     listingID = '1178162'
 
     reviews = read_in_reviews(numReviews, numListings)
-    reviewSet = nltk.word_tokenize(''.join(reviews[listingID]))
+    reviewSet = []
+    for review in reviews[listingID]:
+        sents = parsing.parse_sentences(review)
+        for sent in sents:
+            reviewSet += sent
     grammar = create_CFG_from_reviews(reviewSet)
 
     fullBigramDict = bigrams.find_bigrams(reviews, 2, listingID) 
@@ -229,12 +234,13 @@ if __name__ == '__main__':
 
     print finalSentenceString
 
+    listings = synset.convert_review_to_text_blobs(reviews)
+
     #Correlation score
 
     keywords = synset.get_most_significant_words(reviews, listingID)
 
-    for index, review in enumerate(reviews[listingID]) :
-        print finalSentenceString, review
+    for index, review in enumerate(listings[listingID]) :
         correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
         print index, correlation_score, hits
 

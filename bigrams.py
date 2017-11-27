@@ -37,7 +37,7 @@ def find_bigrams(reviews, nplus, listID):
 		#review = '-BEGIN- '*(nplus-1) + review
 		sents = parse_sentences(review)
 		for words in sents:
-
+			tags = pos_tag(words)
 			words = [u'-BEGIN-']*(nplus-1) + words
 			bigrams = ngrams(words, 2)
 			bigram_counts += Counter(bigrams)
@@ -49,7 +49,11 @@ def find_bigrams(reviews, nplus, listID):
 				# individual letters
 				wordL = []
 				wordL.append(words[j+nplus-1])
-				POS = pos_tag(wordL)[0][1].replace('$', '') #PRP gets a weird $ sign we have to correct for
+				(tag_word, POS) = tags[j]
+				POS = POS.replace('$','')
+				if tag_word != wordL[-1]:
+					raise ValueError('POS tagging does not match current word')
+				#POS = pos_tag(wordL)[0][1].replace('$', '') #PRP gets a weird $ sign we have to correct for
 				# key is first 3 words (nplus = 4)
 				key = tuple(words[j:j+nplus-1])
 				if key not in bigram_n_prob:

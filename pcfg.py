@@ -174,7 +174,7 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
         # no match in the specific dictionary
         fullLookupKey = (currentWord[-1],)
 
-        explorationNum = 10
+        explorationNum = 5
 
         explore = False if random.randint(1, 100) > explorationNum else True
 

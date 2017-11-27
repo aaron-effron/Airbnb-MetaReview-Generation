@@ -11,6 +11,7 @@ import parsing
 from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
+NUM_ITERS = 100
 
 #Borrowed from Car Assignment
 # Function: Weighted Random Choice
@@ -34,8 +35,8 @@ def weightedRandomChoice(weightDict):
         if runningTotal > key:
             chosenIndex = i
             return elems[chosenIndex]
-    raise Exception('Should not reach here')
 
+    return False
 
 #Modification for "PRP$" to not have dollar sign
 def stringModifications(string) :
@@ -79,6 +80,7 @@ ruleList = \
 "PP -> IN NP"]
 
 #Trying to make the CFG more diverse
+
 ruleList.append("VP -> VBD RB JJ")
 ruleList.append("VP -> VBD JJ")
 ruleList.append("NP -> JJ NNS")
@@ -86,6 +88,7 @@ ruleList.append("NP -> CD NNS")
 ruleList.append("NP -> NP IN PP")
 ruleList.append("VP -> VP TO VP")
 ruleList.append("VP -> VP TO NP")
+
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
 numReviews = 100
@@ -150,7 +153,7 @@ def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules define
 
     return grammar
 
-def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
+def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict, newWordWeight, explorationNum) :
 
     #Generate a random sentence from our CFG
     positionList = []
@@ -174,16 +177,18 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
         # no match in the specific dictionary
         fullLookupKey = (currentWord[-1],)
 
-        explorationNum = 5
-
         explore = False if random.randint(1, 100) > explorationNum else True
 
         #If there is a bigram for the current transition we are considering, follow that
 
         if not explore and currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
+            currWord = weightedRandomChoice(bigramDict[currentWord][pos])
+            if not currWord : # This is very uncommon, but need to have so we don't crash
+                return [], []
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities
-                currentWord = (weightedRandomChoice(bigramDict[currentWord][pos]),)
+                #currentWord = (weightedRandomChoice(bigramDict[currentWord][pos]),)
+                currentWord = (currWord,)
             else : 
                 #Append the new word to everything in the current word except for first element.
                 #For example, ("boy in the", "park") should become ("in the park")
@@ -191,7 +196,8 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
                 #the actual form we want in our dictionary
                 listCur = list(currentWord)
                 newList = listCur[1:]
-                newList.append(weightedRandomChoice(bigramDict[currentWord][pos]))
+                #newList.append(weightedRandomChoice(bigramDict[currentWord][pos]))
+                newList.append(currWord)
                 currentWord = tuple(newList)
         elif not explore and nplus != 2 and \
         fullLookupKey in fullBigramDict.keys() and pos in fullBigramDict[fullLookupKey].keys() :
@@ -200,11 +206,11 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
             newWord = weightedRandomChoice(fullBigramDict[fullLookupKey][pos])
 
             if currentWord not in bigramDict :
-                bigramDict[currentWord] = {pos:{newWord: 0.5}}
+                bigramDict[currentWord] = {pos:{newWord: newWordWeight}}
             else:
                 if pos not in bigramDict[currentWord]:
                     bigramDict[currentWord][pos] = {}
-                bigramDict[currentWord][pos][newWord] = 0.5
+                bigramDict[currentWord][pos][newWord] = newWordWeight
             #[pos].append(newWord)
             listCur = list(currentWord)
             newList = listCur[1:]
@@ -230,6 +236,58 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
 
     return finalSentence, positionList
 
+def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoost) :
+    numReviews = len(listings[listingID])
+
+    numChanges = 0
+    bestCorrelation = 1.0 #To measure how many times correlation changes
+
+    for i in range(0, NUM_ITERS) :
+        correlationScore = 0
+        finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict, newWordWeight, expNum)
+        
+        #How to deal with error case when there is a word in bigram
+        # But no matching POS tag 
+        if len(finalSentence) == 0 and len(positionList) == 0: 
+            continue
+
+        finalSentenceString = final_sentence_as_string(finalSentence)
+        for index, review in enumerate(listings[listingID]) :
+            correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
+            correlationScore += correlation_score
+
+        #Update weights
+        avgCorrelation = float(correlationScore) / numReviews
+
+        key = [ ((finalSentence[i])) for i in range(0, nplus - 1)]
+        key = tuple(key)
+        for k in range(nplus - 1, len(finalSentence)) :
+            word = finalSentence[k]
+            pos = positionList[k - (nplus - 2)]
+       
+            if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
+                #TODO: This can obviously be made more complex
+                bigramDict[key][pos][word] *= (avgCorrelation + rewardBoost)
+                '''
+                if avgCorrelation > 0.65 :
+                    bigramDict[key][pos][word] *= 1.15
+                else :
+                    bigramDict[key][pos][word] *= .85
+                '''
+
+            listCur = list(key)
+            newList = listCur[1:]
+            newList.append(word)
+            key = tuple(newList)
+
+        #for index, word in enumerate
+        if avgCorrelation > bestCorrelation :
+            bestCorrelation = avgCorrelation
+            bestSentence = finalSentence
+            numChanges += 1
+
+    return numChanges, bestCorrelation, finalSentence
+
 if __name__ == '__main__':
     reviewSet = []
     for review in reviews[listingID]:
@@ -244,48 +302,16 @@ if __name__ == '__main__':
 
     keywords = synset.get_most_significant_words(reviews, listingID)
 
-    numReviews = len(listings[listingID])
+    #Could also tweak num reviews to compare to
+    rewardList = [0.1, 0.15, 0.2, 0.25]
+    newWordWeightList = [0.5, 0.75]
+    for rewardBoost in rewardList :
+        for newWordWeight in newWordWeightList :
+            expNum = 5
+            numChanges, bestCorrelation, bestSentence = runRLAlgorithm(grammar, 
+                listings, keywords, expNum, newWordWeight, rewardBoost)
 
-    NUM_ITERS = 100000
-    for i in range(0, NUM_ITERS) :
-        correlationScore = 0
-        finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict)
-        
-        finalSentenceString = final_sentence_as_string(finalSentence)
+            print "PARAMS rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
+            ".format(rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence)
 
-        for index, review in enumerate(listings[listingID]) :
-            correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
-            correlationScore += correlation_score
-
-        #Update weights
-        avgCorrelation = float(correlationScore) / numReviews
-
-        key = [ ((finalSentence[i])) for i in range(0, nplus - 1)]
-        key = tuple(key)
-        for k in range(nplus - 1, len(finalSentence)) :
-            word = finalSentence[k]
-            pos = positionList[k - (nplus - 2)]
             
-            #Part of speech tagging is annoyingly sentence dependent, and thus we need this separation
-            #TODO : Fix this hack to deal with random cases
-            if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
-                #TODO: This can obviously be made more complex
-                bigramDict[key][pos][word] *= (avgCorrelation + .25)
-                '''
-                if avgCorrelation > 0.65 :
-                    bigramDict[key][pos][word] *= 1.15
-                else :
-                    bigramDict[key][pos][word] *= .85
-                '''
-
-            listCur = list(key)
-            newList = listCur[1:]
-            newList.append(word)
-            key = tuple(newList)
-
-        #for index, word in enumerate
-        if avgCorrelation > 1.5 :
-            print "Average correlation for \" {} \" is {}".format(finalSentenceString, float(correlationScore) / numReviews)
-
-    #print_final_sentence(finalSentence)
-    

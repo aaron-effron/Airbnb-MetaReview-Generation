@@ -76,7 +76,7 @@ ruleList = \
 "VP -> VBD",
 "VP -> VB NN",
 "VP -> VB NP PP",
-"PP -> IN DT NP"]
+"PP -> IN NP"]
 
 #Trying to make the CFG more diverse
 ruleList.append("VP -> VBD RB JJ")
@@ -84,7 +84,6 @@ ruleList.append("VP -> VBD JJ")
 ruleList.append("NP -> JJ NNS")
 ruleList.append("NP -> CD NNS")
 ruleList.append("NP -> NP IN PP")
-ruleList.append("S -> NP CC NP")
 ruleList.append("VP -> VP TO VP")
 ruleList.append("VP -> VP TO NP")
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
@@ -98,19 +97,27 @@ fullBigramDict = bigrams.find_bigrams(reviews, 2, listingID)
 bigramDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
 
 #Given a grammar, generate a random sample
-def generate_sample(grammar, items):
+#positionList = []
+def generate_sample(grammar, items, positionList):
 
     sample = ""
+
     for item in items: #All symbols to be parsed from a rule passed in
         if isinstance(item, nltk.Nonterminal):
             prodList = [prod.rhs() for prod in grammar.productions(lhs=item)]
+                
             if not prodList :
                 continue
                 #return False #I don't know why this happens, but this fixes
             chosen_expansion = choice(prodList)
-            sample += generate_sample(grammar, list(chosen_expansion))
+        
+            if len(chosen_expansion) == 1 and not isinstance(chosen_expansion[0], nltk.Nonterminal) :
+                positionList.append(str(item).replace('$', ''))
+            
+            sample += generate_sample(grammar, list(chosen_expansion), positionList)
         else:
             sample += str(item) + ' '
+    
     return sample
 
 def final_sentence_as_string(finalSentence) :
@@ -146,12 +153,8 @@ def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules define
 def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
 
     #Generate a random sentence from our CFG
-    sentence = generate_sample(grammar, [nltk.Nonterminal("S")])
-
-    #Part of speech tag the resulting sentence
-    posList = []
-    for pair in nltk.pos_tag(sentence.split()) :
-        posList.append(pair[1].replace('$', ''))
+    positionList = []
+    sentence = generate_sample(grammar, [nltk.Nonterminal("S")], positionList)
 
     #Slight hack, since formatting in bigrams is different based on value of nplus
     if nplus == 2 :
@@ -161,14 +164,23 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
         currentWord = tuple(currentWordList)
 
     finalSentence = []
-    for pos in posList :
+
+    # Don't want position list that we return to change anymore, but need
+    # to pass one in for generate_sample to work.
+    dummyPosList = []
+    for pos in positionList :
 
         #If nplus > 2, this is the key we'll lookup for the full dictionary if there's 
         # no match in the specific dictionary
         fullLookupKey = (currentWord[-1],)
-    
+
+        explorationNum = 10
+
+        explore = False if random.randint(1, 100) > explorationNum else True
+
         #If there is a bigram for the current transition we are considering, follow that
-        if currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
+
+        if not explore and currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities
                 currentWord = (weightedRandomChoice(bigramDict[currentWord][pos]),)
@@ -181,7 +193,7 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
                 newList = listCur[1:]
                 newList.append(weightedRandomChoice(bigramDict[currentWord][pos]))
                 currentWord = tuple(newList)
-        elif nplus != 2 and \
+        elif not explore and nplus != 2 and \
         fullLookupKey in fullBigramDict.keys() and pos in fullBigramDict[fullLookupKey].keys() :
             # There's a match for the full dictionary, so let's add the word and add it to our
             # set
@@ -200,23 +212,23 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict) :
             currentWord = tuple(newList)
 
         else : 
-            #No match in bigram dictionary, choose a random word 
-            #TODO -> Add entry for this when we implement optimization
+            #No match in bigram dictionary (or explore), choose a random word 
+
             if nplus == 2 :
                 #[:-1] since last word has a space after it
-                currentWord = (generate_sample(grammar, [nltk.Nonterminal(pos)])[:-1],)
+                currentWord = (generate_sample(grammar, [nltk.Nonterminal(pos), dummyPosList])[:-1])
             else : #See above for logic here
                 listCur = list(currentWord)
                 newList = listCur[1:]
 
                 #[:-1] since last word has a space after it
-                newWord = (generate_sample(grammar, [nltk.Nonterminal(pos)])[:-1]) 
+                newWord = (generate_sample(grammar, [nltk.Nonterminal(pos)], dummyPosList)[:-1])
                 newList.append(newWord)
                 currentWord = tuple(newList)
 
         finalSentence.append(currentWord[-1])
 
-    return finalSentence, posList
+    return finalSentence, positionList
 
 if __name__ == '__main__':
     reviewSet = []
@@ -234,10 +246,10 @@ if __name__ == '__main__':
 
     numReviews = len(listings[listingID])
 
-    NUM_ITERS = 10000
+    NUM_ITERS = 100000
     for i in range(0, NUM_ITERS) :
         correlationScore = 0
-        finalSentence, posList = create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict)
+        finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict)
         
         finalSentenceString = final_sentence_as_string(finalSentence)
 
@@ -252,16 +264,19 @@ if __name__ == '__main__':
         key = tuple(key)
         for k in range(nplus - 1, len(finalSentence)) :
             word = finalSentence[k]
-            pos = posList[k - (nplus - 2)]
+            pos = positionList[k - (nplus - 2)]
             
             #Part of speech tagging is annoyingly sentence dependent, and thus we need this separation
             #TODO : Fix this hack to deal with random cases
             if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
                 #TODO: This can obviously be made more complex
-                if avgCorrelation > 0.7 :
-                    bigramDict[key][pos][word] *= 1.1
+                bigramDict[key][pos][word] *= (avgCorrelation + .25)
+                '''
+                if avgCorrelation > 0.65 :
+                    bigramDict[key][pos][word] *= 1.15
                 else :
-                    bigramDict[key][pos][word] *= .9
+                    bigramDict[key][pos][word] *= .85
+                '''
 
             listCur = list(key)
             newList = listCur[1:]
@@ -269,8 +284,8 @@ if __name__ == '__main__':
             key = tuple(newList)
 
         #for index, word in enumerate
-        if avgCorrelation > 1 :
-            print "Average correlation for {} is {}".format(finalSentenceString, float(correlationScore) / numReviews)
+        if avgCorrelation > 1.5 :
+            print "Average correlation for \" {} \" is {}".format(finalSentenceString, float(correlationScore) / numReviews)
 
     #print_final_sentence(finalSentence)
     

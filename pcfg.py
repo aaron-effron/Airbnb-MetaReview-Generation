@@ -11,7 +11,7 @@ import parsing
 from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
-NUM_ITERS = 100
+NUM_ITERS = 10000
 
 #Borrowed from Car Assignment
 # Function: Weighted Random Choice
@@ -183,7 +183,12 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict, newWord
 
         if not explore and currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
             currWord = weightedRandomChoice(bigramDict[currentWord][pos])
-            if not currWord : # This is very uncommon, but need to have so we don't crash
+
+            # This is very uncommon, but need to have so we don't crash.  Essentially, this means that
+            # pos is in bigramDict keys, but hasn't been filled.  Honestly not sure if this is a bug,
+            # so, keeping this print statement for now
+            if not currWord : 
+                print "We don't like when this happens!"
                 return [], []
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities

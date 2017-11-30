@@ -11,7 +11,7 @@ import parsing
 from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
-NUM_ITERS = 10000
+NUM_ITERS = 100000
 
 #Borrowed from Car Assignment
 # Function: Weighted Random Choice
@@ -27,7 +27,7 @@ def weightedRandomChoice(weightDict):
         elems.append(elem)
     total = sum(weights)
     key = random.uniform(0, total)
-    runningTotal = 0.0
+    runningTotal = 0.0 
     chosenIndex = None
     for i in range(len(weights)):
         weight = weights[i]
@@ -92,7 +92,7 @@ ruleList.append("VP -> VP TO NP")
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
 numReviews = 100
-nplus = 3
+nplus = 4
 numListings = 10
 listingID = '1178162'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
@@ -237,17 +237,26 @@ def create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict, newWord
                 newList.append(newWord)
                 currentWord = tuple(newList)
 
-        finalSentence.append(currentWord[-1])
+        if (nplus != 2) :
+            finalSentence.append(currentWord[-1])
+        else :
+            finalSentence.append(currentWord)
 
     return finalSentence, positionList
 
-def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoost) :
+def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoost, outputFile) :
     numReviews = len(listings[listingID])
 
     numChanges = 0
     bestCorrelation = 1.0 #To measure how many times correlation changes
+    bestSentence = ''
 
     for i in range(0, NUM_ITERS) :
+        if i > 0 and i % 1000 == 0 :
+            outputFile.write("PARAMS iteration: {} rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
+                \n".format(i, rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence))
+            outputFile.flush()
+
         correlationScore = 0
         finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, bigramDict, fullBigramDict, newWordWeight, expNum)
         
@@ -272,7 +281,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
        
             if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
                 #TODO: This can obviously be made more complex
-                bigramDict[key][pos][word] *= (avgCorrelation + rewardBoost)
+                bigramDict[key][pos][word] += max((avgCorrelation + rewardBoost) - 1, .05) #No negatives
                 '''
                 if avgCorrelation > 0.65 :
                     bigramDict[key][pos][word] *= 1.15
@@ -288,10 +297,12 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
         #for index, word in enumerate
         if avgCorrelation > bestCorrelation :
             bestCorrelation = avgCorrelation
-            bestSentence = finalSentence
+            bestSentence = final_sentence_as_string(finalSentence)
             numChanges += 1
 
-    return numChanges, bestCorrelation, finalSentence
+    outputFile.write('\n\n\n\n')
+
+    return numChanges, bestCorrelation, bestSentence
 
 if __name__ == '__main__':
     reviewSet = []
@@ -307,16 +318,16 @@ if __name__ == '__main__':
 
     keywords = synset.get_most_significant_words(reviews, listingID)
 
-    #Could also tweak num reviews to compare to
-    rewardList = [0.1, 0.15, 0.2, 0.25]
-    newWordWeightList = [0.5, 0.75]
-    for rewardBoost in rewardList :
-        for newWordWeight in newWordWeightList :
-            expNum = 5
-            numChanges, bestCorrelation, bestSentence = runRLAlgorithm(grammar, 
-                listings, keywords, expNum, newWordWeight, rewardBoost)
-
-            print "PARAMS rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
-            ".format(rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence)
-
-            
+    with open('output.txt', 'a') as outputFile:
+        #Could also tweak num reviews to compare to
+        rewardList = [0.15, 0.25]
+        newWordWeightList = [0.5]
+        for rewardBoost in rewardList :
+            for newWordWeight in newWordWeightList :
+                expNum = 5
+                numChanges, bestCorrelation, bestSentence = runRLAlgorithm(grammar, 
+                    listings, keywords, expNum, newWordWeight, rewardBoost, outputFile)
+                '''
+                outputFile.write("PARAMS rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
+                \n".format(rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence))
+                '''

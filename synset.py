@@ -29,10 +29,12 @@ def tfidf(word, blob, bloblist):
 
 ######################################################################################
 
-NUM_COMPARISON_REVIEWS = 5
+NUM_COMPARISON_REVIEWS = 20
 MIN_REVIEW_COUNT = 5
 MAX_SAMPLE_LISTINGS = 300
 MAX_SAMPLE_RESULTS = 10
+NUM_TF_IDF_ITERATIONS = 10
+MAX_COMPARISONS_PER_LISTING = 20
 
 def convert_review_to_text_blobs(reviews):
     listings = {}
@@ -50,92 +52,99 @@ def convert_review_to_text_blobs(reviews):
             listings[listID].append(tb(new_rev))
         #listings[listID] = [tb(review) for review in reviews[listID]]
     return listings
-  
+
 def get_most_significant_words(reviews, listing_id):
 
     listings = convert_review_to_text_blobs(reviews)
-
     selected_reviews = listings[listing_id]
-    comparison_reviews = []
-    comparison_review_count = 0
+
+    sorted_scores = []
 
     listing_ids = listings.keys()
     shuffle(listing_ids)
+    for j in range(NUM_TF_IDF_ITERATIONS):
+        comparison_reviews = []
+        comparison_review_count = 0
 
-    for listing_id in listing_ids:
-        if comparison_review_count == NUM_COMPARISON_REVIEWS:
-            break
-        if len(listings[listing_id]) > MIN_REVIEW_COUNT:
-            comparison_reviews += listings[listing_id]
-            comparison_review_count += 1
-  
-    sorted_scores = []
-    for i, review in enumerate(selected_reviews):
-        scores = {word: tfidf(word, review, comparison_reviews) for word in review.words}
-        sorted_scores = sorted(scores.items()+sorted_scores, key=lambda x: x[1], reverse=True)
-    
-    return sorted_scores[:5]
+        for listing_id in listing_ids:
+            if comparison_review_count == NUM_COMPARISON_REVIEWS:
+                break
+            if len(listings[listing_id]) > MIN_REVIEW_COUNT:
+                comparison_reviews += listings[listing_id]
+                comparison_review_count += 1
+
+        for i, review in enumerate(selected_reviews):
+            scores = {word: tfidf(word, review, comparison_reviews) for word in review.words}
+            sorted_scores = sorted(scores.items()+sorted_scores, key=lambda x: x[1], reverse=True)
+
+    return sorted(set(sorted_scores), key=sorted_scores.index)[:5]
 
 def get_correlation_score(r1, r2, keywords):
     synsets = []
     score = 0
-    hits = set([])
+    hits = []
 
     for keyword in keywords:
         synonyms = wn.synsets(keyword)
         synsets.append((keyword, set(chain.from_iterable([word.lemma_names() for word in synonyms]))))
 
+    num_keyword_hits = 0
     for keyword, lemmas in synsets:
-        if keyword in r1 and keyword in r2:
-            hits.add(keyword)
-            score += 2
-        num_r1_hits = 0
-        num_r2_hits = 0
+        r1_hits = []
+        r2_hits = []
         for synonym in lemmas:
-            syn_count = 0
             if synonym in r1:
-                num_r1_hits += 1
-                syn_count += 1
+                r1_hits.append(synonym)
             if synonym in r2:
-                num_r2_hits += 1
-                syn_count += 1
-            if syn_count > 0:
-                hits.add(synonym)
-        if num_r1_hits > 0 and num_r2_hits > 0:
-            score += num_r1_hits + num_r2_hits
+                r2_hits.append(synonym)
+        if len(r1_hits) > 0 and len(r2_hits) > 0:
+            num_keyword_hits += 1
+            hits.append((keyword, r1_hits, r2_hits))
+        score += num_keyword_hits * (len(keywords) - keywords.index(keyword))
 
+    score = num_keyword_hits
     return score, hits
 
 # Sample usage:
 if __name__ == '__main__':
-    listings = get_listings_from_file()
+    #listings = get_listings_from_file()
+    listings = parsing.parse_reviews('reviews.csv', 1000, 10)
     random_id = listings.keys()[randint(0, len(listings.keys())-1)]
     keywords = get_most_significant_words(listings, random_id)
     results = []
-    count = 0
+    listing_count = 0
     total = len(listings)
     for listing_id in listings:
-        if count == MAX_SAMPLE_LISTINGS:
+        if listing_count == MAX_SAMPLE_LISTINGS:
             break
-        count += 1
-        print('Processing listing %s (%d/%d)...' % (listing_id, count, MAX_SAMPLE_LISTINGS))
         if len(listings[listing_id]) < MIN_REVIEW_COUNT:
             continue
+        listing_count += 1
+        print('Processing listing %s (%d/%d)...' % (listing_id, listing_count, MAX_SAMPLE_LISTINGS))
+        comparison_count = 0
         for i in range(len(listings[listing_id])):
             for j in range(len(listings[listing_id])):
-                if i == j:
+                if i == j or comparison_count > MAX_COMPARISONS_PER_LISTING:
                     continue
-                review1 = listings[listing_id][i]
-                review2 = listings[listing_id][j]
-                correlation_score, hits = get_correlation_score(str(review1), str(review2), zip(*keywords)[0]) 
+                review1 = ' '.join([' '.join(sentence) for sentence in parsing.parse_sentences(listings[listing_id][i])])
+                review2 = ' '.join([' '.join(sentence) for sentence in parsing.parse_sentences(listings[listing_id][j])])
+
+                correlation_score, hits = get_correlation_score(str(review1), str(review2), zip(*keywords)[0])
                 results.append((listing_id, i, j, correlation_score, hits))
+
+                comparison_count += 1
+
+
     results.sort(key = lambda r: r[3], reverse=True)
     for i in range(MAX_SAMPLE_RESULTS):
         listing_id, i, j, correlation_score, hits  = results[i]
         review1 = listings[listing_id][i]
         review2 = listings[listing_id][j]
-        print('Review 1) %s' % (str(review1)))
-        print('Review 2) %s' % (str(review2)))
+        print 'Review 1) ', review1
+        print 'Review 2) ', review2
         print('Correlation score: %f' % (correlation_score))
-        print 'Keywords: ', hits
-        print('') 
+        print('Hits (Keyword / Review 1 hits / Review 2 hits):')
+        for hit in hits:
+            keyword, r1_hits, r2_hits = hit
+            print keyword, ' / ', r1_hits, ' / ', r2_hits
+        print('')

@@ -11,7 +11,7 @@ import parsing
 from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
-NUM_ITERS = 10000
+NUM_ITERS = 50000
 
 #Borrowed from Car Assignment
 # Function: Weighted Random Choice
@@ -324,7 +324,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
                 #print "Iteration {}, updating weight for key {}".format(i, key)
                 #TODO: This can obviously be made more complex
                 
-                bigramDict[key][pos][word] += avgCorrelation * .5 + rewardBoost - 1 
+                bigramDict[key][pos][word] += avgCorrelation + rewardBoost - 1 
                 bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
                 
                 '''

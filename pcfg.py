@@ -11,7 +11,7 @@ import parsing
 from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
-NUM_ITERS = 100000
+NUM_ITERS = 50000
 
 #Borrowed from Car Assignment
 # Function: Weighted Random Choice
@@ -226,6 +226,7 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
 
         else : 
             #No match in bigram dictionary (or explore), choose a random word 
+            currWord = currentWord
 
             if nplus == 2 :
                 #[:-1] since last word has a space after it
@@ -340,9 +341,12 @@ if __name__ == '__main__':
         newWordWeightList = [0.5]
         for rewardBoost in rewardList :
             for newWordWeight in newWordWeightList :
-                expNum = 5
+                expNum = 20
                 numChanges, bestCorrelation, bestSentence = runRLAlgorithm(grammar, 
                     listings, keywords, expNum, newWordWeight, rewardBoost, outputFile)
+                outputFile.write("DONEZO TIME!!!")
+                numChanges, bestCorrelation, bestSentence = runRLAlgorithm(grammar, 
+                    listings, keywords, 0, newWordWeight, rewardBoost, outputFile)
                 '''
                 outputFile.write("PARAMS rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
                 \n".format(rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence))

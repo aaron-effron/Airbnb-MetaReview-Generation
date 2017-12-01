@@ -281,7 +281,8 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
        
             if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
                 #TODO: This can obviously be made more complex
-                bigramDict[key][pos][word] += max((avgCorrelation + rewardBoost) - 1, .05) #No negatives
+                bigramDict[key][pos][word] += avgCorrelation + rewardBoost - 1 
+                bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
                 '''
                 if avgCorrelation > 0.65 :
                     bigramDict[key][pos][word] *= 1.15

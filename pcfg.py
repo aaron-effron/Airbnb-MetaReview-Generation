@@ -265,9 +265,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
 
     for i in range(0, NUM_ITERS) :
         if i > 0 and i % 1000 == 0 :
-            outputFile.write("PARAMS iteration: {} rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
-                \n".format(i, rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence))
-            outputFile.flush()
 
         correlationScore = 0
         finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)

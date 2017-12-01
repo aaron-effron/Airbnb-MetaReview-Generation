@@ -11,7 +11,7 @@ import parsing
 from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
-NUM_ITERS = 100000
+NUM_ITERS = 10000
 
 #Borrowed from Car Assignment
 # Function: Weighted Random Choice
@@ -92,10 +92,25 @@ ruleList.append("VP -> VP TO NP")
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
 numReviews = 100
-nplus = 4
+nplus = 3
 numListings = 10
-listingID = '1178162'
-reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
+listingID = '1178162' 
+reviews = { listingID : ["We had a wonderful time! The location is great! Sean's instructions and " 
+                        "perfectly clear and communicating with him was easy. Getting the door unlocked "
+                        "was a little tricky but once we figured it out, it was easy as can be. This was "
+                        "our first trip to Boston and after exploring much of the city, we still decided this "
+                        "would be a place we would stay again. Extremely close to Fenway and the Boston Back Bay"
+                        "Area, everything was in walking distance or just a subway ride away. ",
+                        "Sean, thanks for being such an awesome host for my boyfriend and I! The apartment was perfect "
+                        "for our needs. We went to the game at Fenway and it was a very short walk to the festivities! "
+                        "Bleacher bar before the game was a great spot! Great first time experience in Boston! We will "
+                        "be returning :)",
+                        "Sean was a good host and provided clear instructions on accessing his apartment. "
+                        "The place was clean and comfortable.  The bed was super soft and cozy!  This place is "
+                        "very convenient for getting around the city and is next to Fenway Park.  Thank you Sean "
+                        "for having us.  I would stay here again if traveling through Boston."],
+            '1234' : ["I would recommend staying with Lisa & Brian without any hesistation! The house is easy to get to, and the free transport passes (charliecards) were a huge help! Lisa was very accomodating, and easy to talk to. The house was lovely and some snacks were provided. This was my first experience of using AirBnB, and it by far exceeded my expectations!!"],
+            '5678' : ["I have had a very good experience this time. "]}
 fullBigramDict = bigrams.find_bigrams(reviews, 2, listingID) 
 bigramDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
 
@@ -158,7 +173,6 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
     #Generate a random sentence from our CFG
     positionList = []
     sentence = generate_sample(grammar, [nltk.Nonterminal("S")], positionList)
-
     finalSentence = []
 
     #Slight hack, since formatting in bigrams is different based on value of nplus
@@ -169,6 +183,7 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
         currentWord = tuple(currentWordList)
         finalSentence.extend(currentWord)
 
+    #finalSentence = [currentWord]
 
     # Don't want position list that we return to change anymore, but need
     # to pass one in for generate_sample to work.
@@ -227,6 +242,7 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
         else : 
             #No match in bigram dictionary (or explore), choose a random word 
 
+            currWord = currentWord
             if nplus == 2 :
                 #[:-1] since last word has a space after it
                 currentWord = (generate_sample(grammar, [nltk.Nonterminal(pos), dummyPosList])[:-1])
@@ -239,17 +255,20 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
                 newList.append(newWord)
                 currentWord = tuple(newList)
 
+
             ### Just newly added
-            #print "Adding new word"
             if currWord not in bigramDict :
                 bigramDict[currWord] = {pos:{newWord: .01}}
             else:
                 if pos not in bigramDict[currWord]:
                     bigramDict[currWord][pos] = {}
                 bigramDict[currWord][pos][newWord] = .01
+            ###
 
         if (nplus != 2) :
             finalSentence.append(currentWord[-1])
+
+
         else :
             finalSentence.append(currentWord)
 
@@ -259,14 +278,16 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
     numReviews = len(listings[listingID])
 
     numChanges = 0
-    bestCorrelation = 1.0 #To measure how many times correlation changes
+    bestCorrelation = 1 #To measure how many times correlation changes
     bestSentence = ''
 
     for i in range(0, NUM_ITERS) :
+        '''
         if i > 0 and i % 1000 == 0 :
             outputFile.write("PARAMS iteration: {} rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
                 \n".format(i, rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence))
             outputFile.flush()
+        '''
 
         correlationScore = 0
         finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)
@@ -277,6 +298,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
             continue
 
         finalSentenceString = final_sentence_as_string(finalSentence)
+        #print "Final sentence in iteration {} is {}".format(i, finalSentenceString)
         for index, review in enumerate(listings[listingID]) :
             correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
             correlationScore += correlation_score
@@ -284,23 +306,35 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
         #Update weights
         avgCorrelation = float(correlationScore) / numReviews
 
+        #print finalSentence
+
         key = [ ((finalSentence[idx])) for idx in range(0, min(nplus - 1, len(finalSentence)))]
         key = tuple(key)
+        #print finalSentence
+        #print key
+        #print key in bigramDict.keys()
+        #exit()
         for k in range(nplus - 1, len(finalSentence)) :
+            #print finalSentence
+            #print positionList
             word = finalSentence[k]
             pos = positionList[k - (nplus - 1)]
        
             if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
+                #print "Iteration {}, updating weight for key {}".format(i, key)
                 #TODO: This can obviously be made more complex
-
-                bigramDict[key][pos][word] += avgCorrelation + rewardBoost - 1 
+                
+                bigramDict[key][pos][word] += avgCorrelation * .5 + rewardBoost - 1 
                 bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
+                
                 '''
-                if avgCorrelation > 0.65 :
-                    bigramDict[key][pos][word] *= 1.15
+                if avgCorrelation > 1 :
+                    bigramDict[key][pos][word] += 1
                 else :
-                    bigramDict[key][pos][word] *= .85
+                    bigramDict[key][pos][word] -= 1
+                    bigramDict[key][pos][word] = max(bigramDict[key][pos][word], 0.05)
                 '''
+                
 
             listCur = list(key)
             newList = listCur[1:]
@@ -309,11 +343,13 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
 
         #for index, word in enumerate
         if avgCorrelation > bestCorrelation :
-            bestCorrelation = avgCorrelation
-            bestSentence = final_sentence_as_string(finalSentence)
             outputFile.write("PARAMS iteration: {} rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
                 \n".format(i, rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence))
+            for k, v in bigramDict.items():
+                outputFile.write(str(k) + ' >>> '+ str(v) + '\n')
             outputFile.flush()
+            bestCorrelation = avgCorrelation
+            bestSentence = final_sentence_as_string(finalSentence)
             numChanges += 1
 
     outputFile.write('\n\n\n\n')
@@ -334,16 +370,21 @@ if __name__ == '__main__':
 
     keywords = synset.get_most_significant_words(reviews, listingID)
 
-    with open('output.txt', 'a') as outputFile:
+    with open('output_test_diffScore4.txt', 'a') as outputFile:
         #Could also tweak num reviews to compare to
-        rewardList = [0.15, 0.25]
+        rewardList = [0.25]
         newWordWeightList = [0.5]
+        print "BigramDict lengths: {}, {}".format(len(bigramDict.keys()), len(fullBigramDict.keys()))
         for rewardBoost in rewardList :
             for newWordWeight in newWordWeightList :
-                expNum = 5
+                expNum = 25
+                print "RL time"
                 numChanges, bestCorrelation, bestSentence = runRLAlgorithm(grammar, 
                     listings, keywords, expNum, newWordWeight, rewardBoost, outputFile)
                 '''
                 outputFile.write("PARAMS rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
                 \n".format(rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence))
                 '''
+                outputFile.write("DONEZO TIME!!!")
+                numChanges, bestCorrelation, bestSentence = runRLAlgorithm(grammar, 
+                    listings, keywords, 0, newWordWeight, rewardBoost, outputFile)

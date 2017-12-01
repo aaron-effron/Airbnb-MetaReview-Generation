@@ -264,8 +264,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
     bestSentence = ''
 
     for i in range(0, NUM_ITERS) :
-        if i > 0 and i % 1000 == 0 :
-
         correlationScore = 0
         finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)
         

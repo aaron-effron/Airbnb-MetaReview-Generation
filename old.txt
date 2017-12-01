@@ -1,0 +1,64 @@
+PARAMS iteration: 1000 rew:0.1 newW:0.5, Num changes: 2, Best correlation: 1.44, best Sentence: The other guests needed then very                  
+PARAMS iteration: 2000 rew:0.1 newW:0.5, Num changes: 2, Best correlation: 1.44, best Sentence: The other guests needed then very                  
+PARAMS iteration: 3000 rew:0.1 newW:0.5, Num changes: 2, Best correlation: 1.44, best Sentence: The other guests needed then very                  
+PARAMS iteration: 4000 rew:0.1 newW:0.5, Num changes: 4, Best correlation: 1.77, best Sentence: The impacts of some caretaker without 5pm minutes from beyond You night needed prior intimate                  
+PARAMS iteration: 5000 rew:0.1 newW:0.5, Num changes: 4, Best correlation: 1.77, best Sentence: The impacts of some caretaker without 5pm minutes from beyond You night needed prior intimate                  
+PARAMS iteration: 6000 rew:0.1 newW:0.5, Num changes: 4, Best correlation: 1.77, best Sentence: The impacts of some caretaker without 5pm minutes from beyond You night needed prior intimate                  
+PARAMS iteration: 7000 rew:0.1 newW:0.5, Num changes: 4, Best correlation: 1.77, best Sentence: The impacts of some caretaker without 5pm minutes from beyond You night needed prior intimate                  
+PARAMS iteration: 8000 rew:0.1 newW:0.5, Num changes: 4, Best correlation: 1.77, best Sentence: The impacts of some caretaker without 5pm minutes from beyond You night needed prior intimate                  
+PARAMS iteration: 9000 rew:0.1 newW:0.5, Num changes: 4, Best correlation: 1.77, best Sentence: The impacts of some caretaker without 5pm minutes from beyond You night needed prior intimate                  
+PARAMS iteration: 10000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 11000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 12000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 13000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 14000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 15000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 16000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 17000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 18000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 19000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 20000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 21000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 22000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 23000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 24000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 25000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 26000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 27000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 28000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 29000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 30000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 31000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 32000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 33000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 34000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 35000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 36000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 37000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 38000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 39000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 40000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 41000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 42000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 43000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 44000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 45000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 46000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 47000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 48000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+PARAMS iteration: 49000 rew:0.1 newW:0.5, Num changes: 5, Best correlation: 1.88, best Sentence: This tracks about the room with little cars needed good                  
+
+
+
+
+PARAMS iteration: 1000 rew:0.1 newW:0.75, Num changes: 2, Best correlation: 1.77, best Sentence: He street needed comfy To want                  
+PARAMS iteration: 2000 rew:0.1 newW:0.75, Num changes: 2, Best correlation: 1.77, best Sentence: He street needed comfy To want                  
+PARAMS iteration: 3000 rew:0.1 newW:0.75, Num changes: 3, Best correlation: 1.88, best Sentence: The room expect to met much willing to meet the costs checkout these genuine interest to needed prior fir to the people in the hotels per It accommodation as per the airport as the gate At this others Although within 5min  not beyond beyond your flight out outside bedrooms                  
+PARAMS iteration: 4000 rew:0.1 newW:0.75, Num changes: 3, Best correlation: 1.88, best Sentence: The room expect to met much willing to meet the costs checkout these genuine interest to needed prior fir to the people in the hotels per It accommodation as per the airport as the gate At this others Although within 5min  not beyond beyond your flight out outside bedrooms                  
+PARAMS iteration: 5000 rew:0.1 newW:0.75, Num changes: 3, Best correlation: 1.88, best Sentence: The room expect to met much willing to meet the costs checkout these genuine interest to needed prior fir to the people in the hotels per It accommodation as per the airport as the gate At this others Although within 5min  not beyond beyond your flight out outside bedrooms                  
+PARAMS iteration: 6000 rew:0.1 newW:0.75, Num changes: 3, Best correlation: 1.88, best Sentence: The room expect to met much willing to meet the costs checkout these genuine interest to needed prior fir to the people in the hotels per It accommodation as per the airport as the gate At this others Although within 5min  not beyond beyond your flight out outside bedrooms                  
+PARAMS iteration: 7000 rew:0.1 newW:0.75, Num changes: 3, Best correlation: 1.88, best Sentence: The room expect to met much willing to meet the costs checkout these genuine interest to needed prior fir to the people in the hotels per It accommodation as per the airport as the gate At this others Although within 5min  not beyond beyond your flight out outside bedrooms                  
+PARAMS iteration: 8000 rew:0.1 newW:0.75, Num changes: 4, Best correlation: 2.21, best Sentence: My stay washed highly snow To separate lots to have to needed flat to short others to wanted also nice to prompt responses                  
+PARAMS iteration: 9000 rew:0.1 newW:0.75, Num changes: 4, Best correlation: 2.21, best Sentence: My stay washed highly snow To separate lots to have to needed flat to short others to wanted also nice to prompt responses                  
+PARAMS iteration: 10000 rew:0.1 newW:0.75, Num changes: 4, Best correlation: 2.21, best Sentence: My stay washed highly snow To separate lots to have to needed flat to short others to wanted also nice to prompt responses                  
+PARAMS iteration: 11000 rew:0.1 newW:0.75, Num changes: 4, Best correlation: 2.21, best Sentence: My stay washed highly snow To separate lots to have to needed flat to short others to wanted also nice to prompt responses                  

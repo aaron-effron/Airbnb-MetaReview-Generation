@@ -11,7 +11,7 @@ import parsing
 from random import choice
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
-NUM_ITERS = 50000
+NUM_ITERS = 10000
 
 #Borrowed from Car Assignment
 # Function: Weighted Random Choice
@@ -96,8 +96,8 @@ nplus = 4
 numListings = 10
 listingID = '1178162'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
-fullBigramDict = bigrams.find_bigrams(reviews, 2, listingID) 
-bigramDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
+fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID) 
+bigramDict, grammarDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
 
 #Given a grammar, generate a random sample
 #positionList = []
@@ -133,6 +133,25 @@ def final_sentence_as_string(finalSentence) :
         finalString += word + ' '
     return finalString
 
+def generate_base_grammar_set(nplus) :
+
+    currentWord = 'BEGIN'
+    posList = []
+    grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
+    while currentWord[-1] != "." :
+        grammarTup = tuple(grammarSet)
+        fullLookupKey = (grammarTup)
+        nextPos = random.choice(grammarDict[fullLookupKey])
+        posList.append(nextPos)
+              
+        #[pos].append(newWord)
+        listCur = list(grammarTup)
+        newList = listCur[1:]
+        newList.append(nextPos)
+        currentWord = tuple(newList)
+        grammarSet = newList
+    return posList
+
 def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules defined globally
 
     for pair in nltk.pos_tag(reviewSet) : #Each pair should be (word, posTag)
@@ -152,6 +171,54 @@ def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules define
     grammar = nltk.CFG.fromstring(grammarString)
 
     return grammar
+
+def create_sentence_from_grammarDict(positionList, nplus) :
+
+    finalSentence = []
+    currentWordList = [ ('-BEGIN-') for i in range(0, nplus - 1)]
+    currentWord = tuple(currentWordList)
+    endSentence = False
+    for pos in positionList :
+
+        #If nplus > 2, this is the key we'll lookup for the full dictionary if there's 
+        # no match in the specific dictionary
+
+        #If there is a bigram for the current transition we are considering, follow that
+        if currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
+            currWord = weightedRandomChoice(bigramDict[currentWord][pos])
+
+            # This is very uncommon, but need to have so we don't crash.  Essentially, this means that
+            # pos is in bigramDict keys, but hasn't been filled.  Honestly not sure if this is a bug,
+            # so, keeping this print statement for now
+            if not currWord : 
+                print "We don't like when this happens!"
+                return [], []
+            if nplus == 2 :
+                #Make a choice weighted by the bigram probabilities
+                #currentWord = (weightedRandomChoice(bigramDict[currentWord][pos]),)
+                currentWord = (currWord,)
+            else : 
+                #Append the new word to everything in the current word except for first element.
+                #For example, ("boy in the", "park") should become ("in the park")
+                #Doing list and tuple conversion because lists are mutable, whereas tuples are 
+                #the actual form we want in our dictionary
+                listCur = list(currentWord)
+                newList = listCur[1:]
+                #newList.append(weightedRandomChoice(bigramDict[currentWord][pos]))
+                newList.append(currWord)
+                currentWord = tuple(newList)
+
+            if (nplus != 2) :
+                finalSentence.append(currentWord[-1])
+            else :
+                finalSentence.append(currentWord)
+
+        else: #This is the end of the sentence
+            if endSentence :
+                return []
+            endSentence = True
+
+    return finalSentence
 
 def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
 
@@ -260,16 +327,18 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
     numReviews = len(listings[listingID])
 
     numChanges = 0
-    bestCorrelation = 1.0 #To measure how many times correlation changes
+    bestCorrelation = 0.0 #To measure how many times correlation changes
     bestSentence = ''
 
     for i in range(0, NUM_ITERS) :
         correlationScore = 0
-        finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)
+        positionList = generate_base_grammar_set(nplus)
+        finalSentence = create_sentence_from_grammarDict(positionList, nplus)
+        #finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)
         
         #How to deal with error case when there is a word in bigram
         # But no matching POS tag 
-        if len(finalSentence) == 0 and len(positionList) == 0: 
+        if len(finalSentence) == 0 or len(positionList) == 0: 
             continue
 
         finalSentenceString = final_sentence_as_string(finalSentence)
@@ -280,30 +349,45 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
         #Update weights
         avgCorrelation = float(correlationScore) / numReviews
 
-        key = [ ((finalSentence[idx])) for idx in range(0, min(nplus - 1, len(finalSentence)))]
-        key = tuple(key)
+        grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
+        currentWord = tuple(grammarSet)
+        for il in range(0, len(finalSentence)) :
+            pos = positionList[il]
+            word = finalSentence[il]
+            key = currentWord
+
+            if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
+                #TODO: This can obviously be made more complex
+
+                bigramDict[key][pos][word] += 3*avgCorrelation - 1
+                bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
+                  
+            #[pos].append(newWord)
+            listCur = list(currentWord)
+            newList = listCur[1:]
+            newList.append(word)
+            currentWord = tuple(newList)
+
+        '''
         for k in range(nplus - 1, len(finalSentence)) :
             word = finalSentence[k]
             pos = positionList[k - (nplus - 1)]
        
             if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
+                print "WE IN HERE!"
                 #TODO: This can obviously be made more complex
 
-                bigramDict[key][pos][word] += avgCorrelation + rewardBoost - 1 
+                bigramDict[key][pos][word] += 3*avgCorrelation - 1
                 bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
-                '''
-                if avgCorrelation > 0.65 :
-                    bigramDict[key][pos][word] *= 1.15
-                else :
-                    bigramDict[key][pos][word] *= .85
-                '''
+               
 
             listCur = list(key)
             newList = listCur[1:]
             newList.append(word)
             key = tuple(newList)
-
+        '''
         #for index, word in enumerate
+        print finalSentence, avgCorrelation
         if avgCorrelation > bestCorrelation :
             bestCorrelation = avgCorrelation
             bestSentence = final_sentence_as_string(finalSentence)
@@ -317,12 +401,14 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
     return numChanges, bestCorrelation, bestSentence
 
 if __name__ == '__main__':
+    #print grammarDict
     reviewSet = []
     for review in reviews[listingID]:
         sents = parsing.parse_sentences(review)
         for sent in sents:
             reviewSet += sent
-    grammar = create_CFG_from_reviews(reviewSet)
+    #grammar = create_CFG_from_reviews(reviewSet)
+    grammar = {}
     
     listings = synset.convert_review_to_text_blobs(reviews)
 

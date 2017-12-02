@@ -39,6 +39,9 @@ def find_bigrams(reviews, nplus, listID):
 		#review = '-BEGIN- '*(nplus-1) + review
 		sents = parse_sentences(review)
 		for words in sents:
+			# Add tuples of ('-BEGIN-', '-BEGIN-') to match the other POS tuples
+			# First part of tuple is the word, second part is the POS tag of that word
+			# POS tag of '-BEGIN-' is '-BEGIN-'
 			tags = [(u'-BEGIN-', '-BEGIN-')]*(nplus-1) + pos_tag(words)
 			words = [u'-BEGIN-']*(nplus-1) + words
 			bigrams = ngrams(words, 2)
@@ -71,6 +74,9 @@ def find_bigrams(reviews, nplus, listID):
 				else:
 					if POS not in grammar_dict[gkey]:
 						grammar_dict[gkey].append(POS)
+			# Take last few tags of previous key and add on most recent tag
+			# This will be the key for the end of the sentence
+			# Value of this will be '.' to indicate the end of the sentence
 			end_key = gkey[1:] + (POS,)
 			if end_key not in grammar_dict:
 				grammar_dict[end_key] = []

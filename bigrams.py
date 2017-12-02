@@ -27,6 +27,8 @@ def find_bigrams(reviews, nplus, listID):
 	word_counts = Counter()
 	# Final bigram probabilities that take into account a set of n words
 	bigram_n_prob = {}
+	# Grammar dictionary
+	grammar_dict = {}
 
 	# Tokenizer to find words but ignore any punctuation other than ' for 
 	# contractions
@@ -37,19 +39,19 @@ def find_bigrams(reviews, nplus, listID):
 		#review = '-BEGIN- '*(nplus-1) + review
 		sents = parse_sentences(review)
 		for words in sents:
-			tags = pos_tag(words)
+			tags = [(u'-BEGIN-', '-BEGIN-')]*(nplus-1) + pos_tag(words)
 			words = [u'-BEGIN-']*(nplus-1) + words
 			bigrams = ngrams(words, 2)
 			bigram_counts += Counter(bigrams)
 			word_counts += Counter(words)
-			for j in range(len(words) - nplus):
+			for j in range(len(words) - nplus + 1):
 				# POS tag last word since it's "added"
 				# Need to make the word a list since if we just 
 				# pass in a word, pos_tag will decompose it into
 				# individual letters
 				wordL = []
 				wordL.append(words[j+nplus-1])
-				(tag_word, POS) = tags[j]
+				(tag_word, POS) = tags[j+nplus-1]
 				POS = POS.replace('$','')
 				if tag_word != wordL[-1]:
 					raise ValueError('POS tagging does not match current word')
@@ -63,6 +65,17 @@ def find_bigrams(reviews, nplus, listID):
 						bigram_n_prob[key][POS] = []
 					bigram_n_prob[key][POS].append(words[j+nplus-1])
 
+				gkey = tuple([gram[1].replace('$','') for gram in tags[j:j+nplus-1]])
+				if gkey not in grammar_dict:
+					grammar_dict[gkey] = [POS]
+				else:
+					if POS not in grammar_dict[gkey]:
+						grammar_dict[gkey].append(POS)
+			end_key = gkey[1:] + (POS,)
+			if end_key not in grammar_dict:
+				grammar_dict[end_key] = []
+			if '.' not in grammar_dict[end_key]:
+				grammar_dict[end_key].append('.')
 					
 
 	for bigram in bigram_counts:
@@ -79,8 +92,8 @@ def find_bigrams(reviews, nplus, listID):
 				new_bigrams[word] = bigram_prob[begin][word]
 			bigram_n_prob[ngram][POS] = new_bigrams
 
-	return bigram_n_prob
+	return bigram_n_prob, grammar_dict
 
 if __name__ == '__main__':
 	reviews = parse_reviews('reviews.csv', REVIEW_COUNT, COMPARISON_LISTING_COUNT+1)
-	b = find_bigrams(reviews, 4, '1178162')
+	b, g = find_bigrams(reviews, 4, '1178162')

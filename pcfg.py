@@ -225,7 +225,7 @@ def create_sentence_from_grammarDict(positionList, nplus) :
 
     return finalSentence
 
-def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
+def create_sentence_from_CFG(grammar, nplus, explorationNum) :
 
     #Generate a random sentence from our CFG
     positionList = []
@@ -285,11 +285,11 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
             newWord = weightedRandomChoice(fullBigramDict[fullLookupKey][pos])
 
             if currentWord not in bigramDict :
-                bigramDict[currentWord] = {pos:{newWord: newWordWeight}}
+                bigramDict[currentWord] = {pos:{newWord: 0.5}}
             else:
                 if pos not in bigramDict[currentWord]:
                     bigramDict[currentWord][pos] = {}
-                bigramDict[currentWord][pos][newWord] = newWordWeight
+                bigramDict[currentWord][pos][newWord] = 0.5
             #[pos].append(newWord)
             listCur = list(currentWord)
             newList = listCur[1:]
@@ -331,7 +331,7 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
 
     return finalSentence, positionList
 
-def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoost, outputFile) :
+def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
     numReviews = len(listings[listingID])
 
     numChanges = 0
@@ -345,7 +345,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
         finalSentence = create_sentence_from_grammarDict(positionList, nplus)
 
         #Old implementation, using CFG
-        #finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)
+        #finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, expNum)
 
         #How to deal with error case when there is a word in bigram
         # But no matching POS tag
@@ -415,8 +415,8 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
         if updatedScore > bestScore :
             bestScore = updatedScore
             bestSentence = final_sentence_as_string(finalSentence)
-            outputFile.write("PARAMS iteration: {} rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
-                \n".format(i, rewardBoost, newWordWeight, numChanges, bestScore, bestSentence))
+            outputFile.write("PARAMS iteration: {}, Num changes: {}, Best correlation: {}, best Sentence: {} \
+                \n".format(i, numChanges, bestScore, bestSentence))
             outputFile.flush()
             numChanges += 1
 
@@ -442,14 +442,11 @@ if __name__ == '__main__':
 
     with open('output.txt', 'a') as outputFile:
         #Could also tweak num reviews to compare to
-        rewardList = [0.15]
-        newWordWeightList = [0.5]
-        for rewardBoost in rewardList :
-            for newWordWeight in newWordWeightList :
-                expNum = 20
-                numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
 
-                    listings, keywords, expNum, newWordWeight, rewardBoost, outputFile)
-                outputFile.write("Now testing with optimized parameters")
-                numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
-                    listings, keywords, 0, newWordWeight, rewardBoost, outputFile)
+
+        expNum = 20
+        numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
+            listings, keywords, expNum, outputFile)
+        outputFile.write("Now testing with optimized parameters")
+        numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
+            listings, keywords, 0, outputFile)

@@ -344,8 +344,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
         positionList = generate_base_grammar_set(nplus)
         finalSentence = create_sentence_from_grammarDict(positionList, nplus)
 
-        
-
         #Old implementation, using CFG
         #finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)
 
@@ -414,7 +412,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
             key = tuple(newList)
         '''
         #for index, word in enumerate
-        print finalSentence, updatedScore
         if updatedScore > bestScore :
             bestScore = updatedScore
             bestSentence = final_sentence_as_string(finalSentence)

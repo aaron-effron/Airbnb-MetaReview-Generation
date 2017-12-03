@@ -96,8 +96,8 @@ nplus = 4
 numListings = 10
 listingID = '1178162'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
-fullBigramDict = bigrams.find_bigrams(reviews, 2, listingID) 
-bigramDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
+fullBigramDict, grammarDict = bigrams.find_bigrams(reviews, 2, listingID) 
+bigramDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)[0]
 
 #Given a grammar, generate a random sample
 #positionList = []
@@ -225,6 +225,9 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
             currentWord = tuple(newList)
 
         else : 
+            if explorationNum == 0:
+                #print "can't explore"
+                break
             #No match in bigram dictionary (or explore), choose a random word 
             currWord = currentWord
 
@@ -260,16 +263,19 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
     numReviews = len(listings[listingID])
 
     numChanges = 0
-    bestCorrelation = 1.0 #To measure how many times correlation changes
+    bestCorrelation = 0.0 #To measure how many times correlation changes
     bestSentence = ''
 
     for i in range(0, NUM_ITERS) :
         correlationScore = 0
         finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)
-        
+        # Did not finish sentence because needed to explore
+        if len(finalSentence) - nplus + 1 < len(positionList):
+            #print "did not finish sentence"
+            continue
         #How to deal with error case when there is a word in bigram
         # But no matching POS tag 
-        if len(finalSentence) == 0 and len(positionList) == 0: 
+        if len(finalSentence) == 0 or len(positionList) == 0: 
             continue
 
         finalSentenceString = final_sentence_as_string(finalSentence)
@@ -289,7 +295,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
             if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
                 #TODO: This can obviously be made more complex
 
-                bigramDict[key][pos][word] += avgCorrelation + rewardBoost - 1 
+                bigramDict[key][pos][word] += 3*avgCorrelation - 1 
                 bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
                 '''
                 if avgCorrelation > 0.65 :
@@ -336,7 +342,8 @@ if __name__ == '__main__':
         newWordWeightList = [0.5]
         for rewardBoost in rewardList :
             for newWordWeight in newWordWeightList :
-                expNum = 20
+                # changed to 0 to never explore
+                expNum = 0
                 numChanges, bestCorrelation, bestSentence = runRLAlgorithm(grammar, 
                     listings, keywords, expNum, newWordWeight, rewardBoost, outputFile)
                 outputFile.write("DONEZO TIME!!!")

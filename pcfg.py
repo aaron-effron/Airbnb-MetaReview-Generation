@@ -9,16 +9,20 @@ import bigrams
 import synset
 import parsing
 from random import choice
+from numpy import exp
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
-NUM_ITERS = 10000
+NUM_ITERS = 100000
+CORRELATION_WEIGHT = .7
+LENGTH_WEIGHT = 1 - CORRELATION_WEIGHT
+OPTIMAL_SENTENCE_LENGTH = 10
 
 #Borrowed from Car Assignment
 # Function: Weighted Random Choice
 # --------------------------------
 # Given a dictionary of the form element -> weight, selects an element
 # randomly based on distribution proportional to the weights. Weights can sum
-# up to be more than 1. 
+# up to be more than 1.
 def weightedRandomChoice(weightDict):
     weights = []
     elems = []
@@ -27,7 +31,7 @@ def weightedRandomChoice(weightDict):
         elems.append(elem)
     total = sum(weights)
     key = random.uniform(0, total)
-    runningTotal = 0.0 
+    runningTotal = 0.0
     chosenIndex = None
     for i in range(len(weights)):
         weight = weights[i]
@@ -45,7 +49,7 @@ def stringModifications(string) :
 
 #Function to deal with contractions as well as lower case i
 #NOTE: As written, we still need this, because bigrams.py doesn't do this
-#in file input. 
+#in file input.
 def tokenModifications(token) :
     token = token.replace('n\'t', ' not')
     token = token.replace('\'ve', ' have')
@@ -96,7 +100,7 @@ nplus = 4
 numListings = 10
 listingID = '1178162'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
-fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID) 
+fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
 bigramDict, grammarDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
 
 #Given a grammar, generate a random sample
@@ -108,19 +112,19 @@ def generate_sample(grammar, items, positionList):
     for item in items: #All symbols to be parsed from a rule passed in
         if isinstance(item, nltk.Nonterminal):
             prodList = [prod.rhs() for prod in grammar.productions(lhs=item)]
-                
+
             if not prodList :
                 continue
                 #return False #I don't know why this happens, but this fixes
             chosen_expansion = choice(prodList)
-        
+
             if len(chosen_expansion) == 1 and not isinstance(chosen_expansion[0], nltk.Nonterminal) :
                 positionList.append(str(item).replace('$', ''))
-            
+
             sample += generate_sample(grammar, list(chosen_expansion), positionList)
         else:
             sample += str(item) + ' '
-    
+
     return sample
 
 def final_sentence_as_string(finalSentence) :
@@ -143,7 +147,7 @@ def generate_base_grammar_set(nplus) :
         fullLookupKey = (grammarTup)
         nextPos = random.choice(grammarDict[fullLookupKey])
         posList.append(nextPos)
-              
+
         #[pos].append(newWord)
         listCur = list(grammarTup)
         newList = listCur[1:]
@@ -180,7 +184,7 @@ def create_sentence_from_grammarDict(positionList, nplus) :
     endSentence = False
     for pos in positionList :
 
-        #If nplus > 2, this is the key we'll lookup for the full dictionary if there's 
+        #If nplus > 2, this is the key we'll lookup for the full dictionary if there's
         # no match in the specific dictionary
 
         #If there is a bigram for the current transition we are considering, follow that
@@ -190,17 +194,17 @@ def create_sentence_from_grammarDict(positionList, nplus) :
             # This is very uncommon, but need to have so we don't crash.  Essentially, this means that
             # pos is in bigramDict keys, but hasn't been filled.  Honestly not sure if this is a bug,
             # so, keeping this print statement for now
-            if not currWord : 
+            if not currWord :
                 print "We don't like when this happens!"
                 return [], []
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities
                 #currentWord = (weightedRandomChoice(bigramDict[currentWord][pos]),)
                 currentWord = (currWord,)
-            else : 
+            else :
                 #Append the new word to everything in the current word except for first element.
                 #For example, ("boy in the", "park") should become ("in the park")
-                #Doing list and tuple conversion because lists are mutable, whereas tuples are 
+                #Doing list and tuple conversion because lists are mutable, whereas tuples are
                 #the actual form we want in our dictionary
                 listCur = list(currentWord)
                 newList = listCur[1:]
@@ -242,7 +246,7 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
     dummyPosList = []
     for pos in positionList :
 
-        #If nplus > 2, this is the key we'll lookup for the full dictionary if there's 
+        #If nplus > 2, this is the key we'll lookup for the full dictionary if there's
         # no match in the specific dictionary
         fullLookupKey = (currentWord[-1],)
 
@@ -256,17 +260,17 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
             # This is very uncommon, but need to have so we don't crash.  Essentially, this means that
             # pos is in bigramDict keys, but hasn't been filled.  Honestly not sure if this is a bug,
             # so, keeping this print statement for now
-            if not currWord : 
+            if not currWord :
                 print "We don't like when this happens!"
                 return [], []
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities
                 #currentWord = (weightedRandomChoice(bigramDict[currentWord][pos]),)
                 currentWord = (currWord,)
-            else : 
+            else :
                 #Append the new word to everything in the current word except for first element.
                 #For example, ("boy in the", "park") should become ("in the park")
-                #Doing list and tuple conversion because lists are mutable, whereas tuples are 
+                #Doing list and tuple conversion because lists are mutable, whereas tuples are
                 #the actual form we want in our dictionary
                 listCur = list(currentWord)
                 newList = listCur[1:]
@@ -291,8 +295,8 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
             newList.append(newWord)
             currentWord = tuple(newList)
 
-        else : 
-            #No match in bigram dictionary (or explore), choose a random word 
+        else :
+            #No match in bigram dictionary (or explore), choose a random word
             currWord = currentWord
 
             if nplus == 2 :
@@ -327,7 +331,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
     numReviews = len(listings[listingID])
 
     numChanges = 0
-    bestCorrelation = 0.0 #To measure how many times correlation changes
+    bestScore = 0.0 #To measure how many times correlation changes
     bestSentence = ''
 
     for i in range(0, NUM_ITERS) :
@@ -335,19 +339,24 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
         positionList = generate_base_grammar_set(nplus)
         finalSentence = create_sentence_from_grammarDict(positionList, nplus)
         #finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)
-        
+
         #How to deal with error case when there is a word in bigram
-        # But no matching POS tag 
-        if len(finalSentence) == 0 or len(positionList) == 0: 
+        # But no matching POS tag
+        if len(finalSentence) == 0 or len(positionList) == 0:
             continue
 
         finalSentenceString = final_sentence_as_string(finalSentence)
         for index, review in enumerate(listings[listingID]) :
-            correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0]) 
+            correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0])
             correlationScore += correlation_score
 
         #Update weights
         avgCorrelation = float(correlationScore) / numReviews
+
+        def sigmoid(x):
+            return 1.0 / (1 + exp(-x))
+
+        updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation - LENGTH_WEIGHT*((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH) ** 2))
 
         grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
         currentWord = tuple(grammarSet)
@@ -359,9 +368,9 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
             if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
                 #TODO: This can obviously be made more complex
 
-                bigramDict[key][pos][word] += 3*avgCorrelation - 1
+                bigramDict[key][pos][word] += updatedScore
                 bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
-                  
+
             #[pos].append(newWord)
             listCur = list(currentWord)
             newList = listCur[1:]
@@ -372,14 +381,14 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
         for k in range(nplus - 1, len(finalSentence)) :
             word = finalSentence[k]
             pos = positionList[k - (nplus - 1)]
-       
+
             if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
                 print "WE IN HERE!"
                 #TODO: This can obviously be made more complex
 
                 bigramDict[key][pos][word] += 3*avgCorrelation - 1
                 bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
-               
+
 
             listCur = list(key)
             newList = listCur[1:]
@@ -387,18 +396,18 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
             key = tuple(newList)
         '''
         #for index, word in enumerate
-        print finalSentence, avgCorrelation
-        if avgCorrelation > bestCorrelation :
-            bestCorrelation = avgCorrelation
+        print finalSentence, updatedScore
+        if updatedScore > bestScore :
+            bestScore = updatedScore
             bestSentence = final_sentence_as_string(finalSentence)
             outputFile.write("PARAMS iteration: {} rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
-                \n".format(i, rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence))
+                \n".format(i, rewardBoost, newWordWeight, numChanges, bestScore, bestSentence))
             outputFile.flush()
             numChanges += 1
 
     outputFile.write('\n\n\n\n')
 
-    return numChanges, bestCorrelation, bestSentence
+    return numChanges, bestScore, bestSentence
 
 if __name__ == '__main__':
     #print grammarDict
@@ -409,26 +418,27 @@ if __name__ == '__main__':
             reviewSet += sent
     #grammar = create_CFG_from_reviews(reviewSet)
     grammar = {}
-    
+
     listings = synset.convert_review_to_text_blobs(reviews)
 
     #Correlation score
 
     keywords = synset.get_most_significant_words(reviews, listingID)
+    print 'Keywords: ', keywords
 
     with open('output.txt', 'a') as outputFile:
         #Could also tweak num reviews to compare to
-        rewardList = [0.15, 0.25]
+        rewardList = [0.15]
         newWordWeightList = [0.5]
         for rewardBoost in rewardList :
             for newWordWeight in newWordWeightList :
                 expNum = 20
-                numChanges, bestCorrelation, bestSentence = runRLAlgorithm(grammar, 
+                numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
                     listings, keywords, expNum, newWordWeight, rewardBoost, outputFile)
                 outputFile.write("DONEZO TIME!!!")
-                numChanges, bestCorrelation, bestSentence = runRLAlgorithm(grammar, 
+                numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
                     listings, keywords, 0, newWordWeight, rewardBoost, outputFile)
                 '''
                 outputFile.write("PARAMS rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
-                \n".format(rewardBoost, newWordWeight, numChanges, bestCorrelation, bestSentence))
+                \n".format(rewardBoost, newWordWeight, numChanges, bestScore, bestSentence))
                 '''

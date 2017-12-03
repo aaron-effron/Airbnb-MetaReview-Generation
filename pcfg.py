@@ -336,8 +336,12 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
 
     for i in range(0, NUM_ITERS) :
         correlationScore = 0
+
+
         positionList = generate_base_grammar_set(nplus)
         finalSentence = create_sentence_from_grammarDict(positionList, nplus)
+
+        #Old implementation, using CFG
         #finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)
 
         #How to deal with error case when there is a word in bigram
@@ -352,6 +356,10 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
 
         #Update weights
         avgCorrelation = float(correlationScore) / numReviews
+
+        #Old code for CFG
+        #key = [ ((finalSentence[idx])) for idx in range(0, min(nplus - 1, len(finalSentence)))]
+        #key = tuple(key)
 
         def sigmoid(x):
             return 1.0 / (1 + exp(-x))
@@ -371,7 +379,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
                 bigramDict[key][pos][word] += updatedScore
                 bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
 
-            #[pos].append(newWord)
             listCur = list(currentWord)
             newList = listCur[1:]
             newList.append(word)

@@ -100,8 +100,13 @@ nplus = 4
 numListings = 10
 listingID = '1178162'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
+<<<<<<< HEAD
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
 bigramDict, grammarDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
+=======
+fullBigramDict, grammarDict = bigrams.find_bigrams(reviews, 2, listingID) 
+bigramDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)[0]
+>>>>>>> master
 
 #Given a grammar, generate a random sample
 #positionList = []
@@ -195,7 +200,7 @@ def create_sentence_from_grammarDict(positionList, nplus) :
             # pos is in bigramDict keys, but hasn't been filled.  Honestly not sure if this is a bug,
             # so, keeping this print statement for now
             if not currWord :
-                print "We don't like when this happens!"
+                print "THIS SHOULD NOT HAPPEN!"
                 return [], []
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities
@@ -295,8 +300,11 @@ def create_sentence_from_CFG(grammar, nplus, newWordWeight, explorationNum) :
             newList.append(newWord)
             currentWord = tuple(newList)
 
-        else :
-            #No match in bigram dictionary (or explore), choose a random word
+        else : 
+            if explorationNum == 0:
+                #print "can't explore"
+                break
+            #No match in bigram dictionary (or explore), choose a random word 
             currWord = currentWord
 
             if nplus == 2 :
@@ -337,9 +345,10 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
     for i in range(0, NUM_ITERS) :
         correlationScore = 0
 
-
         positionList = generate_base_grammar_set(nplus)
         finalSentence = create_sentence_from_grammarDict(positionList, nplus)
+
+        
 
         #Old implementation, using CFG
         #finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, newWordWeight, expNum)
@@ -348,6 +357,11 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
         # But no matching POS tag
         if len(finalSentence) == 0 or len(positionList) == 0:
             continue
+        #TODO: Should probably use this
+        '''  
+        if len(finalSentence) - nplus + 1 < len(positionList): #Whole sentence couldn't be filled
+            continue
+        '''
 
         finalSentenceString = final_sentence_as_string(finalSentence)
         for index, review in enumerate(listings[listingID]) :
@@ -394,6 +408,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, newWordWeight, rewardBoo
                 #TODO: This can obviously be made more complex
 
                 bigramDict[key][pos][word] += 3*avgCorrelation - 1
+
                 bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
 
 
@@ -424,14 +439,13 @@ if __name__ == '__main__':
         for sent in sents:
             reviewSet += sent
     #grammar = create_CFG_from_reviews(reviewSet)
-    grammar = {}
+    grammar = {} #Isn't used, so just initialize to dictionary
 
     listings = synset.convert_review_to_text_blobs(reviews)
 
     #Correlation score
 
     keywords = synset.get_most_significant_words(reviews, listingID)
-    print 'Keywords: ', keywords
 
     with open('output.txt', 'a') as outputFile:
         #Could also tweak num reviews to compare to
@@ -441,11 +455,8 @@ if __name__ == '__main__':
             for newWordWeight in newWordWeightList :
                 expNum = 20
                 numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
+
                     listings, keywords, expNum, newWordWeight, rewardBoost, outputFile)
-                outputFile.write("DONEZO TIME!!!")
+                outputFile.write("Now testing with optimized parameters")
                 numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
                     listings, keywords, 0, newWordWeight, rewardBoost, outputFile)
-                '''
-                outputFile.write("PARAMS rew:{} newW:{}, Num changes: {}, Best correlation: {}, best Sentence: {} \
-                \n".format(rewardBoost, newWordWeight, numChanges, bestScore, bestSentence))
-                '''

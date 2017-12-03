@@ -104,7 +104,6 @@ reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
 bigramDict, grammarDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
 
-
 #Given a grammar, generate a random sample
 #positionList = []
 def generate_sample(grammar, items, positionList):

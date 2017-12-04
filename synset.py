@@ -84,6 +84,9 @@ def get_correlation_score(r1, r2, keywords):
     score = 0
     hits = []
 
+    r1_lowercase = r1.lower()
+    r2_lowercase = r2.lower()
+
     for keyword in keywords:
         synonyms = wn.synsets(keyword)
         synsets.append((keyword, set(chain.from_iterable([word.lemma_names() for word in synonyms]))))
@@ -93,9 +96,9 @@ def get_correlation_score(r1, r2, keywords):
         r1_hits = []
         r2_hits = []
         for synonym in lemmas:
-            if synonym in r1:
+            if synonym in r1_lowercase:
                 r1_hits.append(synonym)
-            if synonym in r2:
+            if synonym in r2_lowercase:
                 r2_hits.append(synonym)
         if len(r1_hits) > 0 and len(r2_hits) > 0:
             num_keyword_hits += 1

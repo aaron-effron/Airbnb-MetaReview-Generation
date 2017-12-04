@@ -10,6 +10,7 @@ import synset
 import parsing
 from random import choice
 from numpy import exp
+import matplotlib.pyplot as plt
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
 NUM_ITERS = 100000
@@ -102,7 +103,11 @@ listingID = '1178162'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
 
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
-bigramDict, grammarDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
+if nplus == 2:
+    bigramDict = fullBigramDict
+    grammarDict = fullGrammarDict  
+else:
+    bigramDict, grammarDict = bigrams.find_bigrams(reviews, nplus, listingID)
 
 #Given a grammar, generate a random sample
 #positionList = []
@@ -337,6 +342,8 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
     numChanges = 0
     bestScore = 0.0 #To measure how many times correlation changes
     bestSentence = ''
+    bestOverTime = []
+    OverTime = []
 
     for i in range(0, NUM_ITERS) :
         correlationScore = 0
@@ -350,6 +357,8 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         #How to deal with error case when there is a word in bigram
         # But no matching POS tag
         if len(finalSentence) == 0 or len(positionList) == 0:
+            bestOverTime.append(bestScore)
+            OverTime.append(0)
             continue
         #TODO: Should probably use this
         '''  
@@ -419,8 +428,25 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
                 \n".format(i, numChanges, bestScore, bestSentence))
             outputFile.flush()
             numChanges += 1
+        bestOverTime.append(bestScore)
+        OverTime.append(updatedScore)
 
     outputFile.write('\n\n\n\n')
+
+    if expNum == 0:
+        plt.figure()
+        plt.scatter(range(1, NUM_ITERS+1), bestOverTime, s=3)
+        plt.title("Best Correlation Scores (Cumulative)")
+        plt.xlabel("Iteration Number")
+        plt.ylabel("Best Correlation Score")
+        plt.savefig('iterVSbest'+str(nplus-1)+'gram.png')
+
+        plt.figure()
+        plt.scatter(range(1, NUM_ITERS+1), OverTime, s=3)
+        plt.title("Correlation Scores from Each Iteration")
+        plt.xlabel("Iteration Number")
+        plt.ylabel("Correlation Score")
+        plt.savefig('iterVSscore'+str(nplus-1)+'.png')
 
     return numChanges, bestScore, bestSentence
 
@@ -445,8 +471,11 @@ if __name__ == '__main__':
 
 
         expNum = 20
+        
         numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
             listings, keywords, expNum, outputFile)
         outputFile.write("Now testing with optimized parameters")
         numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
             listings, keywords, 0, outputFile)
+        print(bestScore)
+        print(bestSentence)

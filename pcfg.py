@@ -97,7 +97,7 @@ ruleList.append("VP -> VP TO NP")
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
 numReviews = 100
-nplus = 4
+nplus = 5
 numListings = 10
 listingID = '1178162'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
@@ -435,7 +435,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
 
     if expNum == 0:
         plt.figure()
-        plt.scatter(range(1, NUM_ITERS+1), bestOverTime, s=3)
+        plt.scatter(range(1, 20000), bestOverTime[0:20000], s=3)
         plt.title("Best Correlation Scores (Cumulative)")
         plt.xlabel("Iteration Number")
         plt.ylabel("Best Correlation Score")

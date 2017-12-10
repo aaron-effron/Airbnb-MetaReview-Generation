@@ -13,7 +13,7 @@ from numpy import exp
 import matplotlib.pyplot as plt
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
-NUM_ITERS = 100000
+NUM_ITERS = 20000
 CORRELATION_WEIGHT = .7
 LENGTH_WEIGHT = 1 - CORRELATION_WEIGHT
 OPTIMAL_SENTENCE_LENGTH = 10
@@ -435,7 +435,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
 
     if expNum == 0:
         plt.figure()
-        plt.scatter(range(1, 20000), bestOverTime[0:20000], s=3)
+        plt.scatter(range(1, NUM_ITERS+1), bestOverTime, s=3)
         plt.title("Best Correlation Scores (Cumulative)")
         plt.xlabel("Iteration Number")
         plt.ylabel("Best Correlation Score")

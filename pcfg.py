@@ -99,7 +99,7 @@ numReviews = 100
 nplus = 4
 numListings = 10
 listingID = '1178162'
-reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
+reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings, listingID)
 
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
 bigramDict, grammarDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)

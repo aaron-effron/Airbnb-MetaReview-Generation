@@ -99,7 +99,7 @@ ruleList.append("VP -> VP TO NP")
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
 numReviews = 100
-nplus = 6
+nplus = 5
 numListings = 10
 listingID = '1178162'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
@@ -435,7 +435,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
                 if top10.full():
                     # Remove lowest scoring sentence from queue
                     removed = top10.get()
-                    assert removed[0] > updatedScore, "Removed sentence's score is better than the score of the sentence added"
+                    assert removed[0] < updatedScore, "Removed sentence's score is better than the score of the sentence added"
                     # Python's queue has no peek() function, so to simulate peek
                     # we remove the next lowest scoring sentence, save that
                     # score as the threshold score, then put the sentence back

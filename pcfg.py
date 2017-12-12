@@ -11,9 +11,11 @@ import parsing
 from random import choice
 from numpy import exp
 import matplotlib.pyplot as plt
+import numpy as np
+import Queue
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
-NUM_ITERS = 20000
+NUM_ITERS = 100000
 CORRELATION_WEIGHT = .7
 LENGTH_WEIGHT = 1 - CORRELATION_WEIGHT
 OPTIMAL_SENTENCE_LENGTH = 10
@@ -344,6 +346,9 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
     bestSentence = ''
     bestOverTime = []
     OverTime = []
+    top10 = Queue.PriorityQueue(maxsize=10)
+    lowestScore = 0.0
+    sentences_seen = []
 
     for i in range(0, NUM_ITERS) :
         correlationScore = 0
@@ -381,7 +386,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         def sigmoid(x):
             return 1.0 / (1 + exp(-x))
 
-        updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation - LENGTH_WEIGHT*((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH) ** 2))
+        updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation - LENGTH_WEIGHT*(min((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH)**2, 400)))
 
         grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
         currentWord = tuple(grammarSet)
@@ -420,6 +425,23 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             newList.append(word)
             key = tuple(newList)
         '''
+
+        if updatedScore > lowestScore:
+            to_add = final_sentence_as_string(finalSentence)
+            if to_add not in sentences_seen:
+                if top10.full():
+                    removed = top10.get()
+                    if (removed[0] > updatedScore):
+                        print "Removal unnecessary"
+                    getLowScore = top10.get()
+                    lowestScore = getLowScore[0]
+                    print "lowest score now ", lowestScore
+                    top10.put(getLowScore)
+                top10.put((updatedScore, to_add))
+                sentences_seen.append(to_add)
+            
+
+
         #for index, word in enumerate
         if updatedScore > bestScore :
             bestScore = updatedScore
@@ -431,7 +453,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         bestOverTime.append(bestScore)
         OverTime.append(updatedScore)
 
-    outputFile.write('\n\n\n\n')
+    #outputFile.write('\n\n\n\n')
 
     if expNum == 0:
         plt.figure()
@@ -448,7 +470,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         plt.ylabel("Correlation Score")
         plt.savefig('iterVSscore'+str(nplus-1)+'.png')
 
-    return numChanges, bestScore, bestSentence
+    return numChanges, bestScore, bestSentence, top10
 
 if __name__ == '__main__':
     #print grammarDict
@@ -468,14 +490,26 @@ if __name__ == '__main__':
 
     with open('output.txt', 'a') as outputFile:
         #Could also tweak num reviews to compare to
+        outputFile.write("\n\n\n\n")
+        outputFile.write("Using nplus="+str(nplus)+"\n")
 
-
+        np.seterr(all='raise')
         expNum = 20
         
-        numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
+        numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
             listings, keywords, expNum, outputFile)
+        while not top10.empty():
+            sent = top10.get()
+            print "Score of ", sent[0], " sentence is ", sent[1]
+            outputFile.write("Score: "+str(sent[0])+"\n")
+            outputFile.write(sent[1]+"\n")
         outputFile.write("Now testing with optimized parameters")
-        numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
+        numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
             listings, keywords, 0, outputFile)
+        while not top10.empty():
+            sent = top10.get()
+            print "Score of ", sent[0], " sentence is ", sent[1]
+            outputFile.write("Score: "+str(sent[0])+"\n")
+            outputFile.write(sent[1]+"\n")
         print(bestScore)
         print(bestSentence)

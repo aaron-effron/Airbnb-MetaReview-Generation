@@ -99,7 +99,7 @@ ruleList.append("VP -> VP TO NP")
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
 numReviews = 100
-nplus = 5
+nplus = 6
 numListings = 10
 listingID = '1178162'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings)
@@ -516,5 +516,5 @@ if __name__ == '__main__':
             print "Score of ", sent[0], " sentence is ", sent[1]
             outputFile.write("Score: "+str(sent[0])+"\n")
             outputFile.write(sent[1]+"\n")
-        print(bestScore)
+        print("Best score is: "bestScore)
         print(bestSentence)

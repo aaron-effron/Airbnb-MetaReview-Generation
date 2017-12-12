@@ -10,6 +10,9 @@ import synset
 import parsing
 from random import choice
 from numpy import exp
+import matplotlib.pyplot as plt
+import numpy as np
+import Queue
 
 PUNCTUATION_LIST = ['.',',','?','$','!',"'",'"',':',';','-', ')', '(', '``', '\'\'']
 NUM_ITERS = 100000
@@ -96,13 +99,17 @@ ruleList.append("VP -> VP TO NP")
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
 numReviews = 100
-nplus = 4
+nplus = 5
 numListings = 10
 listingID = '1178162'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings, listingID)
 
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
-bigramDict, grammarDict = fullBigramDict if nplus == 2 else bigrams.find_bigrams(reviews, nplus, listingID)
+if nplus == 2:
+    bigramDict = fullBigramDict
+    grammarDict = fullGrammarDict  
+else:
+    bigramDict, grammarDict = bigrams.find_bigrams(reviews, nplus, listingID)
 
 #Given a grammar, generate a random sample
 #positionList = []
@@ -337,6 +344,11 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
     numChanges = 0
     bestScore = 0.0 #To measure how many times correlation changes
     bestSentence = ''
+    bestOverTime = []
+    OverTime = []
+    top10 = Queue.PriorityQueue(maxsize=10)
+    lowestScore = 0.0
+    sentences_seen = []
 
     for i in range(0, NUM_ITERS) :
         correlationScore = 0
@@ -347,9 +359,13 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         #Old implementation, using CFG
         #finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, expNum)
 
-        #How to deal with error case when there is a word in bigram
+        # How to deal with error case when there is a word in bigram
         # But no matching POS tag
         if len(finalSentence) == 0 or len(positionList) == 0:
+            # Our sentence did not complete, so the best score remains the same
+            # and the actual score is a 0 (no sentence = score of 0)
+            bestOverTime.append(bestScore)
+            OverTime.append(0)
             continue
         #TODO: Should probably use this
         '''  
@@ -372,7 +388,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         def sigmoid(x):
             return 1.0 / (1 + exp(-x))
 
-        updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation - LENGTH_WEIGHT*((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH) ** 2))
+        updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation - LENGTH_WEIGHT*(min((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH)**2, 400)))
 
         grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
         currentWord = tuple(grammarSet)
@@ -411,6 +427,28 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             newList.append(word)
             key = tuple(newList)
         '''
+
+        if updatedScore > lowestScore:
+            to_add = final_sentence_as_string(finalSentence)
+            if to_add not in sentences_seen:
+                # Make room for the new sentence
+                if top10.full():
+                    # Remove lowest scoring sentence from queue
+                    removed = top10.get()
+                    assert removed[0] < updatedScore, "Removed sentence's score is better than the score of the sentence added"
+                    # Python's queue has no peek() function, so to simulate peek
+                    # we remove the next lowest scoring sentence, save that
+                    # score as the threshold score, then put the sentence back
+                    # in the queue
+                    getLowScore = top10.get()
+                    lowestScore = getLowScore[0]
+                    #print "lowest score now ", lowestScore
+                    top10.put(getLowScore)
+                top10.put((updatedScore, to_add))
+                sentences_seen.append(to_add)
+            
+
+
         #for index, word in enumerate
         if updatedScore > bestScore :
             bestScore = updatedScore
@@ -419,10 +457,27 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
                 \n".format(i, numChanges, bestScore, bestSentence))
             outputFile.flush()
             numChanges += 1
+        bestOverTime.append(bestScore)
+        OverTime.append(updatedScore)
 
-    outputFile.write('\n\n\n\n')
+    #outputFile.write('\n\n\n\n')
 
-    return numChanges, bestScore, bestSentence
+    if expNum == 0:
+        plt.figure()
+        plt.scatter(range(1, NUM_ITERS+1), bestOverTime, s=3)
+        plt.title("Best Correlation Scores (Cumulative)")
+        plt.xlabel("Iteration Number")
+        plt.ylabel("Best Correlation Score")
+        plt.savefig('iterVSbest'+str(nplus-1)+'gram.png')
+
+        plt.figure()
+        plt.scatter(range(1, NUM_ITERS+1), OverTime, s=3)
+        plt.title("Correlation Scores from Each Iteration")
+        plt.xlabel("Iteration Number")
+        plt.ylabel("Correlation Score")
+        plt.savefig('iterVSscore'+str(nplus-1)+'.png')
+
+    return numChanges, bestScore, bestSentence, top10
 
 if __name__ == '__main__':
     #print grammarDict
@@ -442,11 +497,26 @@ if __name__ == '__main__':
 
     with open('output.txt', 'a') as outputFile:
         #Could also tweak num reviews to compare to
+        outputFile.write("\n\n\n\n")
+        outputFile.write("Using nplus="+str(nplus)+"\n")
 
-
+        np.seterr(all='raise')
         expNum = 20
-        numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
+        
+        numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
             listings, keywords, expNum, outputFile)
+        while not top10.empty():
+            sent = top10.get()
+            print "Score of ", sent[0], " sentence is ", sent[1]
+            outputFile.write("Score: "+str(sent[0])+"\n")
+            outputFile.write(sent[1]+"\n")
         outputFile.write("Now testing with optimized parameters")
-        numChanges, bestScore, bestSentence = runRLAlgorithm(grammar,
+        numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
             listings, keywords, 0, outputFile)
+        while not top10.empty():
+            sent = top10.get()
+            print "Score of ", sent[0], " sentence is ", sent[1]
+            outputFile.write("Score: "+str(sent[0])+"\n")
+            outputFile.write(sent[1]+"\n")
+        print("Best score is: ", bestScore)
+        print("Best sentence is: ", bestSentence)

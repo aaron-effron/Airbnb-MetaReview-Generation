@@ -431,7 +431,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             if to_add not in sentences_seen:
                 # Make room for the new sentence
                 if top10.full():
-                    # Remove lowest scoring sentennce from queue
+                    # Remove lowest scoring sentence from queue
                     removed = top10.get()
                     assert removed[0] > updatedScore, "Removed sentence's score is better than the score of the sentence added"
                     # Python's queue has no peek() function, so to simulate peek
@@ -440,7 +440,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
                     # in the queue
                     getLowScore = top10.get()
                     lowestScore = getLowScore[0]
-                    print "lowest score now ", lowestScore
+                    #print "lowest score now ", lowestScore
                     top10.put(getLowScore)
                 top10.put((updatedScore, to_add))
                 sentences_seen.append(to_add)

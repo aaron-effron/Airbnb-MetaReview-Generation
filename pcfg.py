@@ -359,9 +359,11 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         #Old implementation, using CFG
         #finalSentence, positionList = create_sentence_from_CFG(grammar, nplus, expNum)
 
-        #How to deal with error case when there is a word in bigram
+        # How to deal with error case when there is a word in bigram
         # But no matching POS tag
         if len(finalSentence) == 0 or len(positionList) == 0:
+            # Our sentence did not complete, so the best score remains the same
+            # and the actual score is a 0 (no sentence = score of 0)
             bestOverTime.append(bestScore)
             OverTime.append(0)
             continue

@@ -516,5 +516,5 @@ if __name__ == '__main__':
             print "Score of ", sent[0], " sentence is ", sent[1]
             outputFile.write("Score: "+str(sent[0])+"\n")
             outputFile.write(sent[1]+"\n")
-        print("Best score is: "bestScore)
-        print(bestSentence)
+        print("Best score is: ", bestScore)
+        print("Best sentence is: ", bestSentence)

@@ -429,10 +429,15 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         if updatedScore > lowestScore:
             to_add = final_sentence_as_string(finalSentence)
             if to_add not in sentences_seen:
+                # Make room for the new sentence
                 if top10.full():
+                    # Remove lowest scoring sentennce from queue
                     removed = top10.get()
-                    if (removed[0] > updatedScore):
-                        print "Removal unnecessary"
+                    assert removed[0] > updatedScore, "Removed sentence's score is better than the score of the sentence added"
+                    # Python's queue has no peek() function, so to simulate peek
+                    # we remove the next lowest scoring sentence, save that
+                    # score as the threshold score, then put the sentence back
+                    # in the queue
                     getLowScore = top10.get()
                     lowestScore = getLowScore[0]
                     print "lowest score now ", lowestScore

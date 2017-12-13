@@ -101,7 +101,7 @@ ruleList.append("VP -> VP TO NP")
 numReviews = 100
 nplus = 5
 numListings = 10
-listingID = '1178162'
+listingID = '22354'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings, listingID)
 
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)

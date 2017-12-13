@@ -99,10 +99,12 @@ ruleList.append("VP -> VP TO NP")
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
 numReviews = 100
-nplus = 5
+nplus = 3
 numListings = 10
-listingID = '22354'
+listingID = '9857'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings, listingID)
+print "Length of reviews: ", len(reviews)
+print "Length of mandatory: ", len(reviews[listingID])
 
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
 if nplus == 2:

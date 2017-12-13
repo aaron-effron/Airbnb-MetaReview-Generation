@@ -12,6 +12,9 @@ def parse_reviews(file, num_reviews, num_listings, mandatory_listing):
     def check_finished_parsing(review_counts):
         if len(review_counts.keys()) < num_listings or mandatory_listing not in review_counts:
             return False
+        if review_counts[mandatory_listing] < num_reviews:
+            return False
+        print review_counts[mandatory_listing]
         for listID in review_counts:
             if review_counts[listID] >= num_reviews:
                 return True
@@ -32,7 +35,7 @@ def parse_reviews(file, num_reviews, num_listings, mandatory_listing):
                 continue
             review = review.replace('.', '. ')
             listID = row['listing_id']
-            if listID != mandatory_listing:
+            if mandatory_listing not in reviews and listID != mandatory_listing and len(reviews.keys()) == num_listings-1:
                 continue
             if listID not in reviews and len(reviews.keys()) < num_listings:
                 reviews[listID] = []

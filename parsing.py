@@ -5,12 +5,12 @@ from langdetect import detect, lang_detect_exception
 
 PUNCTUATION_LIST = ['.',',','?','!',"'",'"',':',';','-', ')', '(', '``', '\'\'','--']
 
-def parse_reviews(file, num_reviews, num_listings):
+def parse_reviews(file, num_reviews, num_listings, mandatory_listing):
     reviews = {}
     review_counts = {}
 
     def check_finished_parsing(review_counts):
-        if len(review_counts.keys()) < num_listings:
+        if len(review_counts.keys()) < num_listings or mandatory_listing not in review_counts:
             return False
         for listID in review_counts:
             if review_counts[listID] >= num_reviews:

@@ -14,7 +14,6 @@ def parse_reviews(file, num_reviews, num_listings, mandatory_listing):
             return False
         if review_counts[mandatory_listing] < num_reviews:
             return False
-        print review_counts[mandatory_listing]
         for listID in review_counts:
             if review_counts[listID] >= num_reviews:
                 return True

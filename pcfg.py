@@ -101,10 +101,8 @@ ruleList.append("VP -> VP TO NP")
 numReviews = 100
 nplus = 3
 numListings = 10
-listingID = '9857'
+listingID = '22354'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings, listingID)
-print "Length of reviews: ", len(reviews)
-print "Length of mandatory: ", len(reviews[listingID])
 
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
 if nplus == 2:

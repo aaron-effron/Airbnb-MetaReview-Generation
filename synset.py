@@ -50,7 +50,6 @@ def convert_review_to_text_blobs(reviews):
                     new_rev += '. '
                 new_rev += sent
             listings[listID].append(tb(new_rev))
-        #listings[listID] = [tb(review) for review in reviews[listID]]
     return listings
 
 def get_most_significant_words(reviews, listing_id):
@@ -110,7 +109,6 @@ def get_correlation_score(r1, r2, keywords):
 
 # Sample usage:
 if __name__ == '__main__':
-    #listings = get_listings_from_file()
     listings = parsing.parse_reviews('reviews.csv', 1000, 10)
     random_id = listings.keys()[randint(0, len(listings.keys())-1)]
     keywords = get_most_significant_words(listings, random_id)
@@ -136,7 +134,6 @@ if __name__ == '__main__':
                 results.append((listing_id, i, j, correlation_score, hits))
 
                 comparison_count += 1
-
 
     results.sort(key = lambda r: r[3], reverse=True)
     for i in range(MAX_SAMPLE_RESULTS):

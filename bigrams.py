@@ -30,13 +30,7 @@ def find_bigrams(reviews, nplus, listID):
 	# Grammar dictionary
 	grammar_dict = {}
 
-	# Tokenizer to find words but ignore any punctuation other than ' for 
-	# contractions
-	#tokenizer = RegexpTokenizer(r"\w+'*\w*")
-	#tokenizer = RegexpTokenizer(r"\w+")
-
 	for review in reviews[listID]:
-		#review = '-BEGIN- '*(nplus-1) + review
 		sents = parse_sentences(review)
 		for words in sents:
 			# Add tuples of ('-BEGIN-', '-BEGIN-') to match the other POS tuples
@@ -59,7 +53,6 @@ def find_bigrams(reviews, nplus, listID):
 				POS = POS.replace('$','')
 				if tag_word != wordL[-1]:
 					raise ValueError('POS tagging does not match current word')
-				#POS = pos_tag(wordL)[0][1].replace('$', '') #PRP gets a weird $ sign we have to correct for
 				# key is first 3 words (nplus = 4)
 				key = tuple(words[j:j+nplus-1])
 				if key not in bigram_n_prob:
@@ -84,7 +77,6 @@ def find_bigrams(reviews, nplus, listID):
 			if '.' not in grammar_dict[end_key]:
 				grammar_dict[end_key].append('.')
 					
-
 	for bigram in bigram_counts:
 		if bigram[0] not in bigram_prob:
 			bigram_prob[bigram[0]] = {}

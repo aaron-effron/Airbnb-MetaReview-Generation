@@ -6,10 +6,8 @@ from collections import Counter
 from langdetect import detect, lang_detect_exception
 from parsing import parse_sentences, parse_reviews
 
-
 REVIEW_COUNT = 100
 COMPARISON_LISTING_COUNT = 5
-
 
 # Find the bigrams within the review file. 
 # Args:

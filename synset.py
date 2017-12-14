@@ -53,20 +53,21 @@ def convert_review_to_text_blobs(reviews):
         #listings[listID] = [tb(review) for review in reviews[listID]]
     return listings
 
-def get_most_significant_words(reviews, listing_id):
+def get_most_significant_words(reviews, review_listing_id):
 
     listings = convert_review_to_text_blobs(reviews)
-    selected_reviews = listings[listing_id]
+    selected_reviews = listings[review_listing_id]
 
     sorted_scores = []
 
     listing_ids = listings.keys()
-    shuffle(listing_ids)
     for j in range(NUM_TF_IDF_ITERATIONS):
         comparison_reviews = []
         comparison_review_count = 0
-
+        shuffle(listing_ids)
         for listing_id in listing_ids:
+            if listing_id == review_listing_id:
+                continue
             if comparison_review_count == NUM_COMPARISON_REVIEWS:
                 break
             if len(listings[listing_id]) > MIN_REVIEW_COUNT:

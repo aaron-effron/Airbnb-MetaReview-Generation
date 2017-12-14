@@ -42,6 +42,7 @@ def find_bigrams(reviews, nplus, listID):
 			# Add tuples of ('-BEGIN-', '-BEGIN-') to match the other POS tuples
 			# First part of tuple is the word, second part is the POS tag of that word
 			# POS tag of '-BEGIN-' is '-BEGIN-'
+			words = [word for word in words if word != '']
 			tags = [(u'-BEGIN-', '-BEGIN-')]*(nplus-1) + pos_tag(words)
 			words = [u'-BEGIN-']*(nplus-1) + words
 			bigrams = ngrams(words, 2)

@@ -99,9 +99,9 @@ ruleList.append("VP -> VP TO NP")
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
 numReviews = 100
-nplus = 3
+nplus = 5
 numListings = 10
-listingID = '22354'
+listingID = '447826'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings, listingID)
 
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
@@ -112,7 +112,6 @@ else:
     bigramDict, grammarDict = bigrams.find_bigrams(reviews, nplus, listingID)
 
 #Given a grammar, generate a random sample
-#positionList = []
 def generate_sample(grammar, items, positionList):
 
     sample = ""
@@ -123,7 +122,6 @@ def generate_sample(grammar, items, positionList):
 
             if not prodList :
                 continue
-                #return False #I don't know why this happens, but this fixes
             chosen_expansion = choice(prodList)
 
             if len(chosen_expansion) == 1 and not isinstance(chosen_expansion[0], nltk.Nonterminal) :
@@ -216,7 +214,6 @@ def create_sentence_from_grammarDict(positionList, nplus) :
                 #the actual form we want in our dictionary
                 listCur = list(currentWord)
                 newList = listCur[1:]
-                #newList.append(weightedRandomChoice(bigramDict[currentWord][pos]))
                 newList.append(currWord)
                 currentWord = tuple(newList)
 
@@ -240,7 +237,7 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
 
     finalSentence = []
 
-    #Slight hack, since formatting in bigrams is different based on value of nplus
+    #Formatting in bigrams is different based on value of nplus
     if nplus == 2 :
         currentWord = ('-BEGIN-',)
     else :
@@ -266,10 +263,8 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
             currWord = weightedRandomChoice(bigramDict[currentWord][pos])
 
             # This is very uncommon, but need to have so we don't crash.  Essentially, this means that
-            # pos is in bigramDict keys, but hasn't been filled.  Honestly not sure if this is a bug,
-            # so, keeping this print statement for now
+            # pos is in bigramDict keys, but hasn't been filled. 
             if not currWord :
-                print "We don't like when this happens!"
                 return [], []
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities
@@ -282,7 +277,6 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
                 #the actual form we want in our dictionary
                 listCur = list(currentWord)
                 newList = listCur[1:]
-                #newList.append(weightedRandomChoice(bigramDict[currentWord][pos]))
                 newList.append(currWord)
                 currentWord = tuple(newList)
         elif not explore and nplus != 2 and \
@@ -297,7 +291,6 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
                 if pos not in bigramDict[currentWord]:
                     bigramDict[currentWord][pos] = {}
                 bigramDict[currentWord][pos][newWord] = 0.5
-            #[pos].append(newWord)
             listCur = list(currentWord)
             newList = listCur[1:]
             newList.append(newWord)
@@ -305,7 +298,6 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
 
         else : 
             if explorationNum == 0:
-                #print "can't explore"
                 break
             #No match in bigram dictionary (or explore), choose a random word 
             currWord = currentWord
@@ -322,8 +314,6 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
                 newList.append(newWord)
                 currentWord = tuple(newList)
 
-            ### Just newly added
-            #print "Adding new word"
             if currWord not in bigramDict :
                 bigramDict[currWord] = {pos:{newWord: .01}}
             else:
@@ -398,7 +388,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             key = currentWord
 
             if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
-                #TODO: This can obviously be made more complex
 
                 bigramDict[key][pos][word] += updatedScore
                 bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
@@ -447,9 +436,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
                 top10.put((updatedScore, to_add))
                 sentences_seen.append(to_add)
             
-
-
-        #for index, word in enumerate
         if updatedScore > bestScore :
             bestScore = updatedScore
             bestSentence = final_sentence_as_string(finalSentence)
@@ -459,8 +445,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             numChanges += 1
         bestOverTime.append(bestScore)
         OverTime.append(updatedScore)
-
-    #outputFile.write('\n\n\n\n')
 
     if expNum == 0:
         plt.figure()
@@ -480,7 +464,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
     return numChanges, bestScore, bestSentence, top10
 
 if __name__ == '__main__':
-    #print grammarDict
     reviewSet = []
     for review in reviews[listingID]:
         sents = parsing.parse_sentences(review)
@@ -501,7 +484,7 @@ if __name__ == '__main__':
         outputFile.write("Using nplus="+str(nplus)+"\n")
 
         np.seterr(all='raise')
-        expNum = 20
+        expNum = 0
         
         numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
             listings, keywords, expNum, outputFile)

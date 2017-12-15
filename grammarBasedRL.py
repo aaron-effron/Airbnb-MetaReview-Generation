@@ -111,10 +111,10 @@ reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings, listingI
 # Create the n-gram and grammar dictionaries
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
 if nplus == 2:
-    bigramDict = fullBigramDict
+    ngramDict = fullBigramDict
     grammarDict = fullGrammarDict  
 else:
-    bigramDict, grammarDict = bigrams.find_bigrams(reviews, nplus, listingID)
+    ngramDict, grammarDict = bigrams.find_bigrams(reviews, nplus, listingID)
 
 #Given a grammar, generate a random sample
 def generate_sample(grammar, items, positionList):
@@ -210,18 +210,18 @@ def create_sentence_from_grammarDict(positionList, nplus) :
         # no match in the specific dictionary
 
         #If there is a bigram for the current transition we are considering, follow that
-        if currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
-            currWord = weightedRandomChoice(bigramDict[currentWord][pos])
+        if currentWord in ngramDict.keys() and pos in ngramDict[currentWord].keys() :
+            currWord = weightedRandomChoice(ngramDict[currentWord][pos])
 
             # This is very uncommon, but need to have so we don't crash.  Essentially, this means that
-            # pos is in bigramDict keys, but hasn't been filled.  Honestly not sure if this is a bug,
+            # pos is in ngramDict keys, but hasn't been filled.  Honestly not sure if this is a bug,
             # so, keeping this print statement for now
             if not currWord :
                 print "THIS SHOULD NOT HAPPEN!"
                 return [], []
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities
-                #currentWord = (weightedRandomChoice(bigramDict[currentWord][pos]),)
+                #currentWord = (weightedRandomChoice(ngramDict[currentWord][pos]),)
                 currentWord = (currWord,)
             else :
                 #Append the new word to everything in the current word except for first element.
@@ -276,16 +276,16 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
 
         #If there is a bigram for the current transition we are considering, follow that
 
-        if not explore and currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
-            currWord = weightedRandomChoice(bigramDict[currentWord][pos])
+        if not explore and currentWord in ngramDict.keys() and pos in ngramDict[currentWord].keys() :
+            currWord = weightedRandomChoice(ngramDict[currentWord][pos])
 
             # This is very uncommon, but need to have so we don't crash.  Essentially, this means that
-            # pos is in bigramDict keys, but hasn't been filled. 
+            # pos is in ngramDict keys, but hasn't been filled. 
             if not currWord :
                 return [], []
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities
-                #currentWord = (weightedRandomChoice(bigramDict[currentWord][pos]),)
+                #currentWord = (weightedRandomChoice(ngramDict[currentWord][pos]),)
                 currentWord = (currWord,)
             else :
                 #Append the new word to everything in the current word except for first element.
@@ -302,12 +302,12 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
             # set
             newWord = weightedRandomChoice(fullBigramDict[fullLookupKey][pos])
 
-            if currentWord not in bigramDict :
-                bigramDict[currentWord] = {pos:{newWord: 0.5}}
+            if currentWord not in ngramDict :
+                ngramDict[currentWord] = {pos:{newWord: 0.5}}
             else:
-                if pos not in bigramDict[currentWord]:
-                    bigramDict[currentWord][pos] = {}
-                bigramDict[currentWord][pos][newWord] = 0.5
+                if pos not in ngramDict[currentWord]:
+                    ngramDict[currentWord][pos] = {}
+                ngramDict[currentWord][pos][newWord] = 0.5
             listCur = list(currentWord)
             newList = listCur[1:]
             newList.append(newWord)
@@ -331,12 +331,12 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
                 newList.append(newWord)
                 currentWord = tuple(newList)
 
-            if currWord not in bigramDict :
-                bigramDict[currWord] = {pos:{newWord: .01}}
+            if currWord not in ngramDict :
+                ngramDict[currWord] = {pos:{newWord: .01}}
             else:
-                if pos not in bigramDict[currWord]:
-                    bigramDict[currWord][pos] = {}
-                bigramDict[currWord][pos][newWord] = .01
+                if pos not in ngramDict[currWord]:
+                    ngramDict[currWord][pos] = {}
+                ngramDict[currWord][pos][newWord] = .01
 
         if (nplus != 2) :
             finalSentence.append(currentWord[-1])
@@ -407,10 +407,10 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             word = finalSentence[il]
             key = currentWord
 
-            if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
+            if key in ngramDict.keys() and pos in ngramDict[key].keys() and word in ngramDict[key][pos].keys() :
 
-                bigramDict[key][pos][word] += updatedScore
-                bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
+                ngramDict[key][pos][word] += updatedScore
+                ngramDict[key][pos][word] = max(0.01, ngramDict[key][pos][word])
 
             listCur = list(currentWord)
             newList = listCur[1:]

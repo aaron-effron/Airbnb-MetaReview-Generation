@@ -44,7 +44,6 @@ def parse_reviews(file, num_reviews, num_listings, mandatory_listing):
                 review_counts[listID] += 1
     return reviews
 
-
 #Function to deal with contractions as well as lower case i
 def tokenModifications(token) :
     token = token.replace('n\'t', ' not')
@@ -56,7 +55,6 @@ def tokenModifications(token) :
     if token == 'i' : #Upper case I is properly tagged, whereas lower case is not
         token = "I"
     return token
-
 
 # Takes a review and parses the sentences into the format desired
 def parse_sentences(review):
@@ -70,10 +68,10 @@ def parse_sentences(review):
         
         to_delete = []
         for w in range(len(words)):
-            if repr(words[w]).find('\u2026') != -1 : #unicode character that tries to mess everything up
+            if repr(words[w]).find('\u2026') != -1 : #unicode character 
                 index = repr(words[w]).find('\u2026')
-                words[w] = words[w][:index - 2] #... is stupid
-            if words[w].find(u'\xb4') != -1: #unicode character that tries to mess everything up
+                words[w] = words[w][:index - 2] #... character
+            if words[w].find(u'\xb4') != -1: #unicode character 
                 words[w] = words[w].replace(u'\xb4', '\'')
 
             #Cafe with the accent

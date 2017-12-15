@@ -6,10 +6,8 @@ from collections import Counter
 from langdetect import detect, lang_detect_exception
 from parsing import parse_sentences, parse_reviews
 
-
 REVIEW_COUNT = 100
 COMPARISON_LISTING_COUNT = 5
-
 
 # Find the bigrams within the review file. 
 # Args:
@@ -30,18 +28,13 @@ def find_bigrams(reviews, nplus, listID):
 	# Grammar dictionary
 	grammar_dict = {}
 
-	# Tokenizer to find words but ignore any punctuation other than ' for 
-	# contractions
-	#tokenizer = RegexpTokenizer(r"\w+'*\w*")
-	#tokenizer = RegexpTokenizer(r"\w+")
-
 	for review in reviews[listID]:
-		#review = '-BEGIN- '*(nplus-1) + review
 		sents = parse_sentences(review)
 		for words in sents:
 			# Add tuples of ('-BEGIN-', '-BEGIN-') to match the other POS tuples
 			# First part of tuple is the word, second part is the POS tag of that word
 			# POS tag of '-BEGIN-' is '-BEGIN-'
+			words = [word for word in words if word != '']
 			tags = [(u'-BEGIN-', '-BEGIN-')]*(nplus-1) + pos_tag(words)
 			words = [u'-BEGIN-']*(nplus-1) + words
 			bigrams = ngrams(words, 2)
@@ -58,7 +51,6 @@ def find_bigrams(reviews, nplus, listID):
 				POS = POS.replace('$','')
 				if tag_word != wordL[-1]:
 					raise ValueError('POS tagging does not match current word')
-				#POS = pos_tag(wordL)[0][1].replace('$', '') #PRP gets a weird $ sign we have to correct for
 				# key is first 3 words (nplus = 4)
 				key = tuple(words[j:j+nplus-1])
 				if key not in bigram_n_prob:
@@ -83,7 +75,6 @@ def find_bigrams(reviews, nplus, listID):
 			if '.' not in grammar_dict[end_key]:
 				grammar_dict[end_key].append('.')
 					
-
 	for bigram in bigram_counts:
 		if bigram[0] not in bigram_prob:
 			bigram_prob[bigram[0]] = {}

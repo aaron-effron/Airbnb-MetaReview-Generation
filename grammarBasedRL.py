@@ -98,12 +98,17 @@ ruleList.append("VP -> VP TO NP")
 
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
+# Number of reviews to parse per listing
 numReviews = 100
+# nplus = n + 1
 nplus = 5
+# Number of listings to use in TF-IDF
 numListings = 10
+# Listing ID we are generating meta-reviews for
 listingID = '447826'
 reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings, listingID)
 
+# Create the n-gram and grammar dictionaries
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
 if nplus == 2:
     bigramDict = fullBigramDict
@@ -133,28 +138,37 @@ def generate_sample(grammar, items, positionList):
 
     return sample
 
+# Format the final returned sentence as a string (from a list)
 def final_sentence_as_string(finalSentence) :
     finalString = ""
     for word in finalSentence :
+        # Remove any '-BEGIN-'s
         if word == '-BEGIN-' :
             continue
+        # Get the next word to add to the string
         if isinstance(word, tuple) :
             word = word[0]
         finalString += word + ' '
     return finalString
 
+# Generate a grammar from the grammar dictionary
 def generate_base_grammar_set(nplus) :
 
     currentWord = 'BEGIN'
     posList = []
     grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
+    # A sentence indicates the end of a sentence, so generate a grammar until
+    # we reach a period
     while currentWord[-1] != "." :
+        # Get key for grammar dictionary and look it up
         grammarTup = tuple(grammarSet)
         fullLookupKey = (grammarTup)
+        # Choose a random POS to fill in next
         nextPos = random.choice(grammarDict[fullLookupKey])
         posList.append(nextPos)
 
         #[pos].append(newWord)
+        # Modify the key to the dictionary to include the new POS
         listCur = list(grammarTup)
         newList = listCur[1:]
         newList.append(nextPos)
@@ -162,14 +176,16 @@ def generate_base_grammar_set(nplus) :
         grammarSet = newList
     return posList
 
-def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules defined globally
+# Use CFG to generate the grammar
+def create_CFG_from_reviews(reviewSet) : 
+#Appending to non-terminal rules defined globally
 
     for pair in nltk.pos_tag(reviewSet) : #Each pair should be (word, posTag)
         word, posTag = pair[0], pair[1]
-        if posTag == "POS" or posTag in PUNCTUATION_LIST: #Hack for now
+        if posTag == "POS" or posTag in PUNCTUATION_LIST:
             continue
         second = stringModifications(posTag) #To get rid of "$" in PRP$
-        if word == '\'in':# or word == '\'m': #Not sure what this is, but let's ignore for now
+        if word == '\'in':# or word == '\'m': 
             continue
         rule = second + " -> '" + tokenModifications(word) + "'"
         if rule in ruleList : #If we've already added this rule, don't duplicate
@@ -182,6 +198,7 @@ def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules define
 
     return grammar
 
+# Fill in the grammar produced by the grammar dictionary with words
 def create_sentence_from_grammarDict(positionList, nplus) :
 
     finalSentence = []
@@ -229,6 +246,7 @@ def create_sentence_from_grammarDict(positionList, nplus) :
 
     return finalSentence
 
+# Fill in the grammar produced by the CFG
 def create_sentence_from_CFG(grammar, nplus, explorationNum) :
 
     #Generate a random sentence from our CFG
@@ -328,6 +346,7 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
 
     return finalSentence, positionList
 
+# Run reward learning for each iteration of the MDP
 def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
     numReviews = len(listings[listingID])
 
@@ -357,12 +376,13 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             bestOverTime.append(bestScore)
             OverTime.append(0)
             continue
-        #TODO: Should probably use this
+        
         '''  
         if len(finalSentence) - nplus + 1 < len(positionList): #Whole sentence couldn't be filled
             continue
         '''
 
+        # Get the correlation score for the sentence
         finalSentenceString = final_sentence_as_string(finalSentence)
         for index, review in enumerate(listings[listingID]) :
             correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0])
@@ -378,8 +398,10 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         def sigmoid(x):
             return 1.0 / (1 + exp(-x))
 
+        # Calculate the overall score for the sentence
         updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation - LENGTH_WEIGHT*(min((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH)**2, 400)))
 
+        # Update the scores for the n-grams found in the final sentence
         grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
         currentWord = tuple(grammarSet)
         for il in range(0, len(finalSentence)) :
@@ -417,6 +439,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             key = tuple(newList)
         '''
 
+        # Keep track of the top 10 sentences
         if updatedScore > lowestScore:
             to_add = final_sentence_as_string(finalSentence)
             if to_add not in sentences_seen:
@@ -436,6 +459,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
                 top10.put((updatedScore, to_add))
                 sentences_seen.append(to_add)
             
+        # Keep track of best sentence overall
         if updatedScore > bestScore :
             bestScore = updatedScore
             bestSentence = final_sentence_as_string(finalSentence)
@@ -446,6 +470,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         bestOverTime.append(bestScore)
         OverTime.append(updatedScore)
 
+    # Plot the correlation scores over the iterations
     if expNum == 0:
         plt.figure()
         plt.scatter(range(1, NUM_ITERS+1), bestOverTime, s=3)
@@ -464,6 +489,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
     return numChanges, bestScore, bestSentence, top10
 
 if __name__ == '__main__':
+    # Get a set of reviews
     reviewSet = []
     for review in reviews[listingID]:
         sents = parsing.parse_sentences(review)
@@ -474,7 +500,7 @@ if __name__ == '__main__':
 
     listings = synset.convert_review_to_text_blobs(reviews)
 
-    #Correlation score
+    # Get keywords for correlation score
 
     keywords = synset.get_most_significant_words(reviews, listingID)
 
@@ -486,6 +512,8 @@ if __name__ == '__main__':
         np.seterr(all='raise')
         expNum = 0
         
+        # Run the reward learning algorithm (first time is if we want to set
+        # exploring, second time is running without exploration)
         numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
             listings, keywords, expNum, outputFile)
         while not top10.empty():

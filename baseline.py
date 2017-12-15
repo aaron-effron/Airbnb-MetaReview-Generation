@@ -7,6 +7,7 @@ from random import shuffle
 ######################################################################################
 
 # Source: http://stevenloria.com/finding-important-words-in-a-document-using-tf-idf/
+# Calculate TF-IDF
 
 import math
 from textblob import TextBlob as tb
@@ -25,6 +26,8 @@ def tfidf(word, blob, bloblist):
 
 ######################################################################################
 
+
+# Find a sentence in the reviews with the keyword
 def find_sentence_with_word(word, reviews):
     for review in reviews:
         sentences = review.sentences
@@ -34,6 +37,7 @@ def find_sentence_with_word(word, reviews):
 
 properties = {}
 
+# Read in all the listings
 with open('reviews.csv', 'rb') as csvfile:
     reader = csv.reader(csvfile)
     next(reader, None) # skip header
@@ -45,6 +49,7 @@ with open('reviews.csv', 'rb') as csvfile:
         else:
             properties[listing_id].append(comments)
 
+# For each listing, generated the TF-IDF scores for each review
 for listing_id in properties:
     if len(properties[listing_id]) < 5:
         continue
@@ -53,7 +58,7 @@ for listing_id in properties:
         scores = {word: tfidf(word, review, properties[listing_id]) for word in review.words}
         sorted_scores = sorted(scores.items()+sorted_scores, key=lambda x: x[1], reverse=True)
        
-   
+    # Find a random sentence with the best keyword
     shuffle(properties[listing_id])
     sentences = []
     for item in sorted_scores[:3]:

@@ -13,8 +13,8 @@ COMPARISON_LISTING_COUNT = 5
 # Args:
 #	file: path to reviews.csv file
 #	nplus: number of "pre" bigram words to take, i.e. if nplus = 4 then final
-#		bigram_n_prob would have a key of 3 words, and values of POS dictionaries
-#		with the "added" word
+#		bigram_n_prob would have a key of 3 words, and values of POS 
+#		dictionaries with the "added" word
 #	num_reviews: number of reviews to go through within the file
 def find_bigrams(reviews, nplus, listID):
 	# Bigram probabilities
@@ -32,7 +32,8 @@ def find_bigrams(reviews, nplus, listID):
 		sents = parse_sentences(review)
 		for words in sents:
 			# Add tuples of ('-BEGIN-', '-BEGIN-') to match the other POS tuples
-			# First part of tuple is the word, second part is the POS tag of that word
+			# First part of tuple is the word, second part is the POS tag of 
+			# that word
 			# POS tag of '-BEGIN-' is '-BEGIN-'
 			words = [word for word in words if word != '']
 			tags = [(u'-BEGIN-', '-BEGIN-')]*(nplus-1) + pos_tag(words)
@@ -53,6 +54,8 @@ def find_bigrams(reviews, nplus, listID):
 					raise ValueError('POS tagging does not match current word')
 				# key is first 3 words (nplus = 4)
 				key = tuple(words[j:j+nplus-1])
+
+				# Create bigram  dictionary entry
 				if key not in bigram_n_prob:
 					bigram_n_prob[key] = {POS:[words[j+nplus-1]]}
 				else:
@@ -60,6 +63,7 @@ def find_bigrams(reviews, nplus, listID):
 						bigram_n_prob[key][POS] = []
 					bigram_n_prob[key][POS].append(words[j+nplus-1])
 
+				# Create grammar dictionary entry
 				gkey = tuple([gram[1].replace('$','') for gram in tags[j:j+nplus-1]])
 				if gkey not in grammar_dict:
 					grammar_dict[gkey] = [POS]
@@ -81,6 +85,8 @@ def find_bigrams(reviews, nplus, listID):
 		# Treating bigram probability as bigram count/unigram count of first word
 		# (some paper said this was the right way to calculate bigram probability)
 		bigram_prob[bigram[0]][bigram[1]] = float(bigram_counts[bigram])/word_counts[bigram[0]]
+	
+	# Compile n-gram dictionary using bigram probabilities
 	for ngram in bigram_n_prob:
 		begin = ngram[-1]
 		for POS in bigram_n_prob[ngram]:
@@ -91,6 +97,7 @@ def find_bigrams(reviews, nplus, listID):
 
 	return bigram_n_prob, grammar_dict
 
+# Used to individually test the bigram dictionary
 if __name__ == '__main__':
 	reviews = parse_reviews('reviews.csv', REVIEW_COUNT, COMPARISON_LISTING_COUNT+1)
 	b, g = find_bigrams(reviews, 4, '1178162')

@@ -396,7 +396,8 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             return 1.0 / (1 + exp(-x))
 
         # Calculate the overall score for the sentence
-        updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation - LENGTH_WEIGHT*(min((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH)**2, 400)))
+        updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation \
+            - LENGTH_WEIGHT*(min((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH)**2, 400)))
 
         # Update the scores for the n-grams found in the final sentence
         grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]

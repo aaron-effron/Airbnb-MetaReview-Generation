@@ -396,6 +396,11 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             return 1.0 / (1 + exp(-x))
 
         # Calculate the overall score for the sentence
+        # To avoid overflowing sigmoid, we took the minimum of the squared 
+        # sentence length difference and 400, which would represent a sentence
+        # with 20 more words than our optimal length, which is already very
+        # bad. Thus, we chose this as our cap, since if it is larger than
+        # 400 this sentence is already very bad
         updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation \
             - LENGTH_WEIGHT*(min((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH)**2, 400)))
 

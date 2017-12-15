@@ -122,7 +122,7 @@ def get_correlation_score(r1, r2, keywords):
 # Sample usage:
 # Only used for testing, actual usage can be found in grammarBasedRL.py
 if __name__ == '__main__':
-    listings = parsing.parse_reviews('reviews.csv', 1000, 10)
+    listings = parsing.parse_reviews('data/reviews.csv', 1000, 10)
     random_id = listings.keys()[randint(0, len(listings.keys())-1)]
     keywords = get_most_significant_words(listings, random_id)
     results = []

@@ -99,5 +99,5 @@ def find_bigrams(reviews, nplus, listID):
 
 # Used to individually test the bigram dictionary
 if __name__ == '__main__':
-	reviews = parse_reviews('reviews.csv', REVIEW_COUNT, COMPARISON_LISTING_COUNT+1)
+	reviews = parse_reviews('data/reviews.csv', REVIEW_COUNT, COMPARISON_LISTING_COUNT+1)
 	b, g = find_bigrams(reviews, 4, '1178162')

@@ -38,7 +38,7 @@ def find_sentence_with_word(word, reviews):
 properties = {}
 
 # Read in all the listings
-with open('reviews.csv', 'rb') as csvfile:
+with open('data/reviews.csv', 'rb') as csvfile:
     reader = csv.reader(csvfile)
     next(reader, None) # skip header
     for row in reader:

@@ -105,8 +105,8 @@ nplus = 5
 # Number of listings to use in TF-IDF
 numListings = 10
 # Listing ID we are generating meta-reviews for
-listingID = '447826'
-reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings, listingID)
+listingID = '1178162'
+reviews = parsing.parse_reviews('data/reviews.csv', numReviews, numListings, listingID)
 
 # Create the n-gram and grammar dictionaries
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
@@ -181,9 +181,11 @@ def create_CFG_from_reviews(reviewSet) :
 
     for pair in nltk.pos_tag(reviewSet) : #Each pair should be (word, posTag)
         word, posTag = pair[0], pair[1]
+        # If we get any weird tags or we run into punctuation, ignore for now
         if posTag == "POS" or posTag in PUNCTUATION_LIST:
             continue
         second = stringModifications(posTag) #To get rid of "$" in PRP$
+        # Ignore this contraction (for now)
         if word == '\'in': 
             continue
         rule = second + " -> '" + tokenModifications(word) + "'"
@@ -376,9 +378,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             OverTime.append(0)
             continue
         
-        
-        if len(finalSentence) - nplus + 1 < len(positionList): #Whole sentence couldn't be filled
-            continue
 
         # Get the correlation score for the sentence
         finalSentenceString = final_sentence_as_string(finalSentence)

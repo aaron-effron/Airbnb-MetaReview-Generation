@@ -100,7 +100,7 @@ ruleList.append("VP -> VP TO NP")
 
 # Number of reviews to parse per listing
 numReviews = 100
-# nplus = n + 1
+# nplus is n + 1
 nplus = 5
 # Number of listings to use in TF-IDF
 numListings = 10
@@ -167,7 +167,6 @@ def generate_base_grammar_set(nplus) :
         nextPos = random.choice(grammarDict[fullLookupKey])
         posList.append(nextPos)
 
-        #[pos].append(newWord)
         # Modify the key to the dictionary to include the new POS
         listCur = list(grammarTup)
         newList = listCur[1:]
@@ -185,7 +184,7 @@ def create_CFG_from_reviews(reviewSet) :
         if posTag == "POS" or posTag in PUNCTUATION_LIST:
             continue
         second = stringModifications(posTag) #To get rid of "$" in PRP$
-        if word == '\'in':# or word == '\'m': 
+        if word == '\'in': 
             continue
         rule = second + " -> '" + tokenModifications(word) + "'"
         if rule in ruleList : #If we've already added this rule, don't duplicate
@@ -377,10 +376,9 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             OverTime.append(0)
             continue
         
-        '''  
+        
         if len(finalSentence) - nplus + 1 < len(positionList): #Whole sentence couldn't be filled
             continue
-        '''
 
         # Get the correlation score for the sentence
         finalSentenceString = final_sentence_as_string(finalSentence)
@@ -418,26 +416,6 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             newList = listCur[1:]
             newList.append(word)
             currentWord = tuple(newList)
-
-        '''
-        for k in range(nplus - 1, len(finalSentence)) :
-            word = finalSentence[k]
-            pos = positionList[k - (nplus - 1)]
-
-            if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
-                print "WE IN HERE!"
-                #TODO: This can obviously be made more complex
-
-                bigramDict[key][pos][word] += 3*avgCorrelation - 1
-
-                bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
-
-
-            listCur = list(key)
-            newList = listCur[1:]
-            newList.append(word)
-            key = tuple(newList)
-        '''
 
         # Keep track of the top 10 sentences
         if updatedScore > lowestScore:
@@ -512,16 +490,18 @@ if __name__ == '__main__':
         np.seterr(all='raise')
         expNum = 0
         
-        # Run the reward learning algorithm (first time is if we want to set
-        # exploring, second time is running without exploration)
-        numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
-            listings, keywords, expNum, outputFile)
-        while not top10.empty():
-            sent = top10.get()
-            print "Score of ", sent[0], " sentence is ", sent[1]
-            outputFile.write("Score: "+str(sent[0])+"\n")
-            outputFile.write(sent[1]+"\n")
-        outputFile.write("Now testing with optimized parameters")
+        # Run the reward learning algorithm (first one is if we want to set
+        # exploring, second one is running without exploration)
+        # Always run at least one run without exploration
+        if expNum != 0:
+            numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
+                listings, keywords, expNum, outputFile)
+            while not top10.empty():
+                sent = top10.get()
+                print "Score of ", sent[0], " sentence is ", sent[1]
+                outputFile.write("Score: "+str(sent[0])+"\n")
+                outputFile.write(sent[1]+"\n")
+            outputFile.write("Now testing with optimized parameters")
         numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
             listings, keywords, 0, outputFile)
         while not top10.empty():

@@ -96,9 +96,10 @@ def parse_sentences(review):
                 to_delete.append(w-1)
             words[w] = tokenModifications(words[w])
 
-        # Delete the words we need to
+        # Delete the words we found above
         numIter = 0
         for num in to_delete:
+            # numIter is crucial, since the array changes when we delete
             del words[num-numIter]
             numIter += 1 
         sentences.append(words)

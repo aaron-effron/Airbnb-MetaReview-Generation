@@ -98,18 +98,23 @@ ruleList.append("VP -> VP TO NP")
 
 #ruleList.append("NP -> NNP") #I'd like to include this rule, but it's not helping
 
+# Number of reviews to parse per listing
 numReviews = 100
+# nplus is n + 1
 nplus = 5
+# Number of listings to use in TF-IDF
 numListings = 10
-listingID = '447826'
-reviews = parsing.parse_reviews('reviews.csv', numReviews, numListings, listingID)
+# Listing ID we are generating meta-reviews for
+listingID = '1178162'
+reviews = parsing.parse_reviews('data/reviews.csv', numReviews, numListings, listingID)
 
+# Create the n-gram and grammar dictionaries
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
 if nplus == 2:
-    bigramDict = fullBigramDict
+    ngramDict = fullBigramDict
     grammarDict = fullGrammarDict  
 else:
-    bigramDict, grammarDict = bigrams.find_bigrams(reviews, nplus, listingID)
+    ngramDict, grammarDict = bigrams.find_bigrams(reviews, nplus, listingID)
 
 #Given a grammar, generate a random sample
 def generate_sample(grammar, items, positionList):
@@ -133,28 +138,36 @@ def generate_sample(grammar, items, positionList):
 
     return sample
 
+# Format the final returned sentence as a string (from a list)
 def final_sentence_as_string(finalSentence) :
     finalString = ""
     for word in finalSentence :
+        # Remove any '-BEGIN-'s
         if word == '-BEGIN-' :
             continue
+        # Get the next word to add to the string
         if isinstance(word, tuple) :
             word = word[0]
         finalString += word + ' '
     return finalString
 
+# Generate a grammar from the grammar dictionary
 def generate_base_grammar_set(nplus) :
 
     currentWord = 'BEGIN'
     posList = []
     grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
+    # A sentence indicates the end of a sentence, so generate a grammar until
+    # we reach a period
     while currentWord[-1] != "." :
+        # Get key for grammar dictionary and look it up
         grammarTup = tuple(grammarSet)
         fullLookupKey = (grammarTup)
+        # Choose a random POS to fill in next
         nextPos = random.choice(grammarDict[fullLookupKey])
         posList.append(nextPos)
 
-        #[pos].append(newWord)
+        # Modify the key to the dictionary to include the new POS
         listCur = list(grammarTup)
         newList = listCur[1:]
         newList.append(nextPos)
@@ -162,14 +175,18 @@ def generate_base_grammar_set(nplus) :
         grammarSet = newList
     return posList
 
-def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules defined globally
+# Use CFG to generate the grammar
+def create_CFG_from_reviews(reviewSet) : 
+#Appending to non-terminal rules defined globally
 
     for pair in nltk.pos_tag(reviewSet) : #Each pair should be (word, posTag)
         word, posTag = pair[0], pair[1]
-        if posTag == "POS" or posTag in PUNCTUATION_LIST: #Hack for now
+        # If we get any weird tags or we run into punctuation, ignore for now
+        if posTag == "POS" or posTag in PUNCTUATION_LIST:
             continue
         second = stringModifications(posTag) #To get rid of "$" in PRP$
-        if word == '\'in':# or word == '\'m': #Not sure what this is, but let's ignore for now
+        # Ignore this contraction (for now)
+        if word == '\'in': 
             continue
         rule = second + " -> '" + tokenModifications(word) + "'"
         if rule in ruleList : #If we've already added this rule, don't duplicate
@@ -182,6 +199,7 @@ def create_CFG_from_reviews(reviewSet) : #Appending to non-terminal rules define
 
     return grammar
 
+# Fill in the grammar produced by the grammar dictionary with words
 def create_sentence_from_grammarDict(positionList, nplus) :
 
     finalSentence = []
@@ -194,18 +212,18 @@ def create_sentence_from_grammarDict(positionList, nplus) :
         # no match in the specific dictionary
 
         #If there is a bigram for the current transition we are considering, follow that
-        if currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
-            currWord = weightedRandomChoice(bigramDict[currentWord][pos])
+        if currentWord in ngramDict.keys() and pos in ngramDict[currentWord].keys() :
+            currWord = weightedRandomChoice(ngramDict[currentWord][pos])
 
             # This is very uncommon, but need to have so we don't crash.  Essentially, this means that
-            # pos is in bigramDict keys, but hasn't been filled.  Honestly not sure if this is a bug,
+            # pos is in ngramDict keys, but hasn't been filled.  Honestly not sure if this is a bug,
             # so, keeping this print statement for now
             if not currWord :
                 print "THIS SHOULD NOT HAPPEN!"
                 return [], []
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities
-                #currentWord = (weightedRandomChoice(bigramDict[currentWord][pos]),)
+                #currentWord = (weightedRandomChoice(ngramDict[currentWord][pos]),)
                 currentWord = (currWord,)
             else :
                 #Append the new word to everything in the current word except for first element.
@@ -229,6 +247,7 @@ def create_sentence_from_grammarDict(positionList, nplus) :
 
     return finalSentence
 
+# Fill in the grammar produced by the CFG
 def create_sentence_from_CFG(grammar, nplus, explorationNum) :
 
     #Generate a random sentence from our CFG
@@ -259,16 +278,16 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
 
         #If there is a bigram for the current transition we are considering, follow that
 
-        if not explore and currentWord in bigramDict.keys() and pos in bigramDict[currentWord].keys() :
-            currWord = weightedRandomChoice(bigramDict[currentWord][pos])
+        if not explore and currentWord in ngramDict.keys() and pos in ngramDict[currentWord].keys() :
+            currWord = weightedRandomChoice(ngramDict[currentWord][pos])
 
             # This is very uncommon, but need to have so we don't crash.  Essentially, this means that
-            # pos is in bigramDict keys, but hasn't been filled. 
+            # pos is in ngramDict keys, but hasn't been filled. 
             if not currWord :
                 return [], []
             if nplus == 2 :
                 #Make a choice weighted by the bigram probabilities
-                #currentWord = (weightedRandomChoice(bigramDict[currentWord][pos]),)
+                #currentWord = (weightedRandomChoice(ngramDict[currentWord][pos]),)
                 currentWord = (currWord,)
             else :
                 #Append the new word to everything in the current word except for first element.
@@ -285,12 +304,12 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
             # set
             newWord = weightedRandomChoice(fullBigramDict[fullLookupKey][pos])
 
-            if currentWord not in bigramDict :
-                bigramDict[currentWord] = {pos:{newWord: 0.5}}
+            if currentWord not in ngramDict :
+                ngramDict[currentWord] = {pos:{newWord: 0.5}}
             else:
-                if pos not in bigramDict[currentWord]:
-                    bigramDict[currentWord][pos] = {}
-                bigramDict[currentWord][pos][newWord] = 0.5
+                if pos not in ngramDict[currentWord]:
+                    ngramDict[currentWord][pos] = {}
+                ngramDict[currentWord][pos][newWord] = 0.5
             listCur = list(currentWord)
             newList = listCur[1:]
             newList.append(newWord)
@@ -314,12 +333,12 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
                 newList.append(newWord)
                 currentWord = tuple(newList)
 
-            if currWord not in bigramDict :
-                bigramDict[currWord] = {pos:{newWord: .01}}
+            if currWord not in ngramDict :
+                ngramDict[currWord] = {pos:{newWord: .01}}
             else:
-                if pos not in bigramDict[currWord]:
-                    bigramDict[currWord][pos] = {}
-                bigramDict[currWord][pos][newWord] = .01
+                if pos not in ngramDict[currWord]:
+                    ngramDict[currWord][pos] = {}
+                ngramDict[currWord][pos][newWord] = .01
 
         if (nplus != 2) :
             finalSentence.append(currentWord[-1])
@@ -328,6 +347,7 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
 
     return finalSentence, positionList
 
+# Run reward learning for each iteration of the MDP
 def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
     numReviews = len(listings[listingID])
 
@@ -357,12 +377,9 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             bestOverTime.append(bestScore)
             OverTime.append(0)
             continue
-        #TODO: Should probably use this
-        '''  
-        if len(finalSentence) - nplus + 1 < len(positionList): #Whole sentence couldn't be filled
-            continue
-        '''
+        
 
+        # Get the correlation score for the sentence
         finalSentenceString = final_sentence_as_string(finalSentence)
         for index, review in enumerate(listings[listingID]) :
             correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0])
@@ -378,8 +395,16 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         def sigmoid(x):
             return 1.0 / (1 + exp(-x))
 
-        updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation - LENGTH_WEIGHT*(min((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH)**2, 400)))
+        # Calculate the overall score for the sentence
+        # To avoid overflowing sigmoid, we took the minimum of the squared 
+        # sentence length difference and 400, which would represent a sentence
+        # with 20 more words than our optimal length, which is already very
+        # bad. Thus, we chose this as our cap, since if it is larger than
+        # 400 this sentence is already very bad
+        updatedScore = sigmoid(CORRELATION_WEIGHT*avgCorrelation \
+            - LENGTH_WEIGHT*(min((len(finalSentence) - OPTIMAL_SENTENCE_LENGTH)**2, 400)))
 
+        # Update the scores for the n-grams found in the final sentence
         grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
         currentWord = tuple(grammarSet)
         for il in range(0, len(finalSentence)) :
@@ -387,36 +412,17 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             word = finalSentence[il]
             key = currentWord
 
-            if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
+            if key in ngramDict.keys() and pos in ngramDict[key].keys() and word in ngramDict[key][pos].keys() :
 
-                bigramDict[key][pos][word] += updatedScore
-                bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
+                ngramDict[key][pos][word] += updatedScore
+                ngramDict[key][pos][word] = max(0.01, ngramDict[key][pos][word])
 
             listCur = list(currentWord)
             newList = listCur[1:]
             newList.append(word)
             currentWord = tuple(newList)
 
-        '''
-        for k in range(nplus - 1, len(finalSentence)) :
-            word = finalSentence[k]
-            pos = positionList[k - (nplus - 1)]
-
-            if key in bigramDict.keys() and pos in bigramDict[key].keys() and word in bigramDict[key][pos].keys() :
-                print "WE IN HERE!"
-                #TODO: This can obviously be made more complex
-
-                bigramDict[key][pos][word] += 3*avgCorrelation - 1
-
-                bigramDict[key][pos][word] = max(0.01, bigramDict[key][pos][word])
-
-
-            listCur = list(key)
-            newList = listCur[1:]
-            newList.append(word)
-            key = tuple(newList)
-        '''
-
+        # Keep track of the top 10 sentences
         if updatedScore > lowestScore:
             to_add = final_sentence_as_string(finalSentence)
             if to_add not in sentences_seen:
@@ -436,6 +442,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
                 top10.put((updatedScore, to_add))
                 sentences_seen.append(to_add)
             
+        # Keep track of best sentence overall
         if updatedScore > bestScore :
             bestScore = updatedScore
             bestSentence = final_sentence_as_string(finalSentence)
@@ -446,6 +453,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         bestOverTime.append(bestScore)
         OverTime.append(updatedScore)
 
+    # Plot the correlation scores over the iterations
     if expNum == 0:
         plt.figure()
         plt.scatter(range(1, NUM_ITERS+1), bestOverTime, s=3)
@@ -464,6 +472,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
     return numChanges, bestScore, bestSentence, top10
 
 if __name__ == '__main__':
+    # Get a set of reviews
     reviewSet = []
     for review in reviews[listingID]:
         sents = parsing.parse_sentences(review)
@@ -474,7 +483,7 @@ if __name__ == '__main__':
 
     listings = synset.convert_review_to_text_blobs(reviews)
 
-    #Correlation score
+    # Get keywords for correlation score
 
     keywords = synset.get_most_significant_words(reviews, listingID)
 
@@ -486,14 +495,18 @@ if __name__ == '__main__':
         np.seterr(all='raise')
         expNum = 0
         
-        numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
-            listings, keywords, expNum, outputFile)
-        while not top10.empty():
-            sent = top10.get()
-            print "Score of ", sent[0], " sentence is ", sent[1]
-            outputFile.write("Score: "+str(sent[0])+"\n")
-            outputFile.write(sent[1]+"\n")
-        outputFile.write("Now testing with optimized parameters")
+        # Run the reward learning algorithm (first one is if we want to set
+        # exploring, second one is running without exploration)
+        # Always run at least one run without exploration
+        if expNum != 0:
+            numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
+                listings, keywords, expNum, outputFile)
+            while not top10.empty():
+                sent = top10.get()
+                print "Score of ", sent[0], " sentence is ", sent[1]
+                outputFile.write("Score: "+str(sent[0])+"\n")
+                outputFile.write(sent[1]+"\n")
+            outputFile.write("Now testing with optimized parameters")
         numChanges, bestScore, bestSentence, top10 = runRLAlgorithm(grammar,
             listings, keywords, 0, outputFile)
         while not top10.empty():

@@ -11,6 +11,7 @@ import parsing
 ######################################################################################
 
 # Source: http://stevenloria.com/finding-important-words-in-a-document-using-tf-idf/
+# Calculating TF-IDF
 
 import math
 from textblob import TextBlob as tb
@@ -36,6 +37,7 @@ MAX_SAMPLE_RESULTS = 10
 NUM_TF_IDF_ITERATIONS = 10
 MAX_COMPARISONS_PER_LISTING = 20
 
+# Text blobs are used in TF-IDF, so we need to convert
 def convert_review_to_text_blobs(reviews):
     listings = {}
     for listID in reviews:
@@ -52,6 +54,7 @@ def convert_review_to_text_blobs(reviews):
             listings[listID].append(tb(new_rev))
     return listings
 
+# Get the keywords from the reviews
 def get_most_significant_words(reviews, review_listing_id):
 
     listings = convert_review_to_text_blobs(reviews)
@@ -60,6 +63,8 @@ def get_most_significant_words(reviews, review_listing_id):
     sorted_scores = []
 
     listing_ids = listings.keys()
+    # Compare the selected reviews to the other listings and extract the
+    # keywords
     for j in range(NUM_TF_IDF_ITERATIONS):
         comparison_reviews = []
         comparison_review_count = 0
@@ -72,26 +77,31 @@ def get_most_significant_words(reviews, review_listing_id):
             if len(listings[listing_id]) > MIN_REVIEW_COUNT:
                 comparison_reviews += listings[listing_id]
                 comparison_review_count += 1
-
+        # Calculate the TF-IDF score for each word in the reviews
         for i, review in enumerate(selected_reviews):
             scores = {word: tfidf(word, review, comparison_reviews) for word in review.words}
             sorted_scores = sorted(scores.items()+sorted_scores, key=lambda x: x[1], reverse=True)
 
     return sorted(set(sorted_scores), key=sorted_scores.index)[:5]
 
+# Get the correlation score for two reviews
 def get_correlation_score(r1, r2, keywords):
     synsets = []
     score = 0
     hits = []
 
+    # Need to lowercase everything for comparison
     r1_lowercase = r1.lower()
     r2_lowercase = r2.lower()
 
+    # Get the synsets for the keywords
     for keyword in keywords:
         synonyms = wn.synsets(keyword)
         synsets.append((keyword, set(chain.from_iterable([word.lemma_names() for word in synonyms]))))
 
     num_keyword_hits = 0
+    # Count the number of times a review has the keywords or synsets of the 
+    # keywords
     for keyword, lemmas in synsets:
         r1_hits = []
         r2_hits = []
@@ -103,14 +113,16 @@ def get_correlation_score(r1, r2, keywords):
         if len(r1_hits) > 0 and len(r2_hits) > 0:
             num_keyword_hits += 1
             hits.append((keyword, r1_hits, r2_hits))
+        # Update the score
         score += num_keyword_hits * (len(keywords) - keywords.index(keyword))
 
     score = num_keyword_hits
     return score, hits
 
 # Sample usage:
+# Only used for testing, actual usage can be found in grammarBasedRL.py
 if __name__ == '__main__':
-    listings = parsing.parse_reviews('reviews.csv', 1000, 10)
+    listings = parsing.parse_reviews('data/reviews.csv', 1000, 10)
     random_id = listings.keys()[randint(0, len(listings.keys())-1)]
     keywords = get_most_significant_words(listings, random_id)
     results = []

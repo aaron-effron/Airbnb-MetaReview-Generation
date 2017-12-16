@@ -50,22 +50,6 @@ def stringModifications(string) :
     string = string.replace('$', '')
     return string
 
-#Function to deal with contractions as well as lower case i
-#NOTE: As written, we still need this, because bigrams.py doesn't do this
-#in file input.
-def tokenModifications(token) :
-    token = token.replace('n\'t', ' not')
-    token = token.replace('\'ve', ' have')
-    token = token.replace('\'ll', ' will')
-    token = token.replace('\'d', ' would')
-    token = token.replace('\'re', ' are')
-    token = token.replace('\'s', ' is')
-    token = token.replace('\'m', ' am')
-    token = token.replace('airbnb\'ers', 'airbnbers')
-    if token == 'i' : #Upper case I is properly tagged, whereas lower case is not
-        token = "I"
-    return token
-
 #This non-terminal section can obviously be appended to
 
 ruleList = \
@@ -128,7 +112,6 @@ def generate_sample(grammar, items, positionList):
             if not prodList :
                 continue
             chosen_expansion = choice(prodList)
-
             if len(chosen_expansion) == 1 and not isinstance(chosen_expansion[0], nltk.Nonterminal) :
                 positionList.append(str(item).replace('$', ''))
 
@@ -188,7 +171,7 @@ def create_CFG_from_reviews(reviewSet) :
         # Ignore this contraction (for now)
         if word == '\'in': 
             continue
-        rule = second + " -> '" + tokenModifications(word) + "'"
+        rule = second + " -> '" + parsing.tokenModifications(word) + "'"
         if rule in ruleList : #If we've already added this rule, don't duplicate
             continue
         ruleList.append(rule)
@@ -253,7 +236,6 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
     #Generate a random sentence from our CFG
     positionList = []
     sentence = generate_sample(grammar, [nltk.Nonterminal("S")], positionList)
-
     finalSentence = []
 
     #Formatting in bigrams is different based on value of nplus
@@ -264,7 +246,6 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
         currentWord = tuple(currentWordList)
         finalSentence.extend(currentWord)
 
-
     # Don't want position list that we return to change anymore, but need
     # to pass one in for generate_sample to work.
     dummyPosList = []
@@ -273,6 +254,8 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
         #If nplus > 2, this is the key we'll lookup for the full dictionary if there's
         # no match in the specific dictionary
         fullLookupKey = (currentWord[-1],)
+
+        #NOTE: CFG does not work without exploration, as there are too many possibilities
 
         explore = False if random.randint(1, 100) > explorationNum else True
 
@@ -380,6 +363,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         
 
         # Get the correlation score for the sentence
+        
         finalSentenceString = final_sentence_as_string(finalSentence)
         for index, review in enumerate(listings[listingID]) :
             correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0])
@@ -387,7 +371,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
 
         #Update weights
         avgCorrelation = float(correlationScore) / numReviews
-
+        
         #Old code for CFG
         #key = [ ((finalSentence[idx])) for idx in range(0, min(nplus - 1, len(finalSentence)))]
         #key = tuple(key)
@@ -407,9 +391,12 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         # Update the scores for the n-grams found in the final sentence
         grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
         currentWord = tuple(grammarSet)
-        for il in range(0, len(finalSentence)) :
-            pos = positionList[il]
-            word = finalSentence[il]
+
+        startIndex = 0
+        #startIndex = nplus - 1 #Implementation for CFG
+        for il in range(startIndex, len(finalSentence)) :
+            pos = positionList[il - startIndex]
+            word = finalSentence[il - startIndex]
             key = currentWord
 
             if key in ngramDict.keys() and pos in ngramDict[key].keys() and word in ngramDict[key][pos].keys() :
@@ -479,7 +466,8 @@ if __name__ == '__main__':
         for sent in sents:
             reviewSet += sent
     #grammar = create_CFG_from_reviews(reviewSet)
-    grammar = {} #Isn't used, so just initialize to dictionary
+    grammar = {} #Grammar Dictionary is initialized in RL algorithm 
+    #so just initialize to dictionary
 
     listings = synset.convert_review_to_text_blobs(reviews)
 

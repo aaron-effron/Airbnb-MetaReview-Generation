@@ -59,8 +59,10 @@ def tokenModifications(token) :
     token = token.replace('\'ve', ' have')
     token = token.replace('\'ll', ' will')
     token = token.replace('\'d', ' would')
+    token = token.replace('\'re', ' are')
     token = token.replace('\'s', ' is')
     token = token.replace('\'m', ' am')
+    token = token.replace('airbnb\'ers', 'airbnbers')
     if token == 'i' : #Upper case I is properly tagged, whereas lower case is not
         token = "I"
     return token

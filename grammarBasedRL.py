@@ -50,22 +50,6 @@ def stringModifications(string) :
     string = string.replace('$', '')
     return string
 
-#Function to deal with contractions as well as lower case i
-#NOTE: As written, we still need this, because bigrams.py doesn't do this
-#in file input.
-def tokenModifications(token) :
-    token = token.replace('n\'t', ' not')
-    token = token.replace('\'ve', ' have')
-    token = token.replace('\'ll', ' will')
-    token = token.replace('\'d', ' would')
-    token = token.replace('\'re', ' are')
-    token = token.replace('\'s', ' is')
-    token = token.replace('\'m', ' am')
-    token = token.replace('airbnb\'ers', 'airbnbers')
-    if token == 'i' : #Upper case I is properly tagged, whereas lower case is not
-        token = "I"
-    return token
-
 #This non-terminal section can obviously be appended to
 
 ruleList = \
@@ -112,7 +96,7 @@ reviews = parsing.parse_reviews('data/reviews.csv', numReviews, numListings, lis
 fullBigramDict, fullGrammarDict = bigrams.find_bigrams(reviews, 2, listingID)
 if nplus == 2:
     ngramDict = fullBigramDict
-    grammarDict = fullGrammarDict  
+    grammarDict = fullGrammarDict
 else:
     ngramDict, grammarDict = bigrams.find_bigrams(reviews, nplus, listingID)
 
@@ -128,7 +112,6 @@ def generate_sample(grammar, items, positionList):
             if not prodList :
                 continue
             chosen_expansion = choice(prodList)
-
             if len(chosen_expansion) == 1 and not isinstance(chosen_expansion[0], nltk.Nonterminal) :
                 positionList.append(str(item).replace('$', ''))
 
@@ -176,7 +159,7 @@ def generate_base_grammar_set(nplus) :
     return posList
 
 # Use CFG to generate the grammar
-def create_CFG_from_reviews(reviewSet) : 
+def create_CFG_from_reviews(reviewSet) :
 #Appending to non-terminal rules defined globally
 
     for pair in nltk.pos_tag(reviewSet) : #Each pair should be (word, posTag)
@@ -186,9 +169,9 @@ def create_CFG_from_reviews(reviewSet) :
             continue
         second = stringModifications(posTag) #To get rid of "$" in PRP$
         # Ignore this contraction (for now)
-        if word == '\'in': 
+        if word == '\'in':
             continue
-        rule = second + " -> '" + tokenModifications(word) + "'"
+        rule = second + " -> '" + parsing.tokenModifications(word) + "'"
         if rule in ruleList : #If we've already added this rule, don't duplicate
             continue
         ruleList.append(rule)
@@ -253,7 +236,6 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
     #Generate a random sentence from our CFG
     positionList = []
     sentence = generate_sample(grammar, [nltk.Nonterminal("S")], positionList)
-
     finalSentence = []
 
     #Formatting in bigrams is different based on value of nplus
@@ -264,7 +246,6 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
         currentWord = tuple(currentWordList)
         finalSentence.extend(currentWord)
 
-
     # Don't want position list that we return to change anymore, but need
     # to pass one in for generate_sample to work.
     dummyPosList = []
@@ -274,6 +255,8 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
         # no match in the specific dictionary
         fullLookupKey = (currentWord[-1],)
 
+        #NOTE: CFG does not work without exploration, as there are too many possibilities
+
         explore = False if random.randint(1, 100) > explorationNum else True
 
         #If there is a bigram for the current transition we are considering, follow that
@@ -282,7 +265,7 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
             currWord = weightedRandomChoice(ngramDict[currentWord][pos])
 
             # This is very uncommon, but need to have so we don't crash.  Essentially, this means that
-            # pos is in ngramDict keys, but hasn't been filled. 
+            # pos is in ngramDict keys, but hasn't been filled.
             if not currWord :
                 return [], []
             if nplus == 2 :
@@ -315,10 +298,10 @@ def create_sentence_from_CFG(grammar, nplus, explorationNum) :
             newList.append(newWord)
             currentWord = tuple(newList)
 
-        else : 
+        else :
             if explorationNum == 0:
                 break
-            #No match in bigram dictionary (or explore), choose a random word 
+            #No match in bigram dictionary (or explore), choose a random word
             currWord = currentWord
 
             if nplus == 2 :
@@ -377,9 +360,10 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             bestOverTime.append(bestScore)
             OverTime.append(0)
             continue
-        
+
 
         # Get the correlation score for the sentence
+
         finalSentenceString = final_sentence_as_string(finalSentence)
         for index, review in enumerate(listings[listingID]) :
             correlation_score, hits = synset.get_correlation_score(str(finalSentenceString), str(review), zip(*keywords)[0])
@@ -396,7 +380,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
             return 1.0 / (1 + exp(-x))
 
         # Calculate the overall score for the sentence
-        # To avoid overflowing sigmoid, we took the minimum of the squared 
+        # To avoid overflowing sigmoid, we took the minimum of the squared
         # sentence length difference and 400, which would represent a sentence
         # with 20 more words than our optimal length, which is already very
         # bad. Thus, we chose this as our cap, since if it is larger than
@@ -407,9 +391,12 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
         # Update the scores for the n-grams found in the final sentence
         grammarSet = [ ('-BEGIN-') for i in range(0, nplus - 1)]
         currentWord = tuple(grammarSet)
-        for il in range(0, len(finalSentence)) :
-            pos = positionList[il]
-            word = finalSentence[il]
+
+        startIndex = 0
+        #startIndex = nplus - 1 #Implementation for CFG
+        for il in range(startIndex, len(finalSentence)) :
+            pos = positionList[il - startIndex]
+            word = finalSentence[il - startIndex]
             key = currentWord
 
             if key in ngramDict.keys() and pos in ngramDict[key].keys() and word in ngramDict[key][pos].keys() :
@@ -441,7 +428,7 @@ def runRLAlgorithm(grammar, listings, keywords, expNum, outputFile) :
                     top10.put(getLowScore)
                 top10.put((updatedScore, to_add))
                 sentences_seen.append(to_add)
-            
+
         # Keep track of best sentence overall
         if updatedScore > bestScore :
             bestScore = updatedScore
@@ -479,7 +466,8 @@ if __name__ == '__main__':
         for sent in sents:
             reviewSet += sent
     #grammar = create_CFG_from_reviews(reviewSet)
-    grammar = {} #Isn't used, so just initialize to dictionary
+    grammar = {} #Grammar Dictionary is initialized in RL algorithm
+    #so just initialize to dictionary
 
     listings = synset.convert_review_to_text_blobs(reviews)
 
@@ -494,7 +482,7 @@ if __name__ == '__main__':
 
         np.seterr(all='raise')
         expNum = 0
-        
+
         # Run the reward learning algorithm (first one is if we want to set
         # exploring, second one is running without exploration)
         # Always run at least one run without exploration

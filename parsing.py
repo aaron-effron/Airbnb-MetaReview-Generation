@@ -30,7 +30,7 @@ def parse_reviews(file, num_reviews, num_listings, mandatory_listing):
             # Decode the review
             review = row['comments'].decode('utf-8')
             # Make sure the review is in English
-            try: 
+            try:
                 if detect(review) != 'en':
                     continue
             except lang_detect_exception.LangDetectException:
@@ -59,8 +59,10 @@ def tokenModifications(token) :
     token = token.replace('\'ve', ' have')
     token = token.replace('\'ll', ' will')
     token = token.replace('\'d', ' would')
+    token = token.replace('\'re', ' are')
     token = token.replace('\'s', ' is')
     token = token.replace('\'m', ' am')
+    token = token.replace('airbnb\'ers', 'airbnbers')
     if token == 'i' : #Upper case I is properly tagged, whereas lower case is not
         token = "I"
     return token
@@ -75,14 +77,14 @@ def parse_sentences(review):
         words = [x for x in words if x not in PUNCTUATION_LIST]
         if words == []:
             continue
-        
+
         # Words to delete due to unicode characters or contractions
         to_delete = []
         for w in range(len(words)):
-            if repr(words[w]).find('\u2026') != -1 : #unicode character 
+            if repr(words[w]).find('\u2026') != -1 : #unicode character
                 index = repr(words[w]).find('\u2026')
                 words[w] = words[w][:index - 2] #... character
-            if words[w].find(u'\xb4') != -1: #unicode character 
+            if words[w].find(u'\xb4') != -1: #unicode character
                 words[w] = words[w].replace(u'\xb4', '\'')
 
             #Cafe with the accent
@@ -101,6 +103,6 @@ def parse_sentences(review):
         for num in to_delete:
             # numIter is crucial, since the array changes when we delete
             del words[num-numIter]
-            numIter += 1 
+            numIter += 1
         sentences.append(words)
     return sentences

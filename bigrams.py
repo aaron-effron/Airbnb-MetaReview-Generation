@@ -9,11 +9,11 @@ from parsing import parse_sentences, parse_reviews
 REVIEW_COUNT = 100
 COMPARISON_LISTING_COUNT = 5
 
-# Find the bigrams within the review file. 
+# Find the bigrams within the review file.
 # Args:
 #	file: path to reviews.csv file
 #	nplus: number of "pre" bigram words to take, i.e. if nplus = 4 then final
-#		bigram_n_prob would have a key of 3 words, and values of POS 
+#		bigram_n_prob would have a key of 3 words, and values of POS
 #		dictionaries with the "added" word
 #	num_reviews: number of reviews to go through within the file
 def find_bigrams(reviews, nplus, listID):
@@ -32,7 +32,7 @@ def find_bigrams(reviews, nplus, listID):
 		sents = parse_sentences(review)
 		for words in sents:
 			# Add tuples of ('-BEGIN-', '-BEGIN-') to match the other POS tuples
-			# First part of tuple is the word, second part is the POS tag of 
+			# First part of tuple is the word, second part is the POS tag of
 			# that word
 			# POS tag of '-BEGIN-' is '-BEGIN-'
 			words = [word for word in words if word != '']
@@ -43,7 +43,7 @@ def find_bigrams(reviews, nplus, listID):
 			word_counts += Counter(words)
 			for j in range(len(words) - nplus + 1):
 				# POS tag last word since it's "added"
-				# Need to make the word a list since if we just 
+				# Need to make the word a list since if we just
 				# pass in a word, pos_tag will decompose it into
 				# individual letters
 				wordL = []
@@ -78,14 +78,14 @@ def find_bigrams(reviews, nplus, listID):
 				grammar_dict[end_key] = []
 			if '.' not in grammar_dict[end_key]:
 				grammar_dict[end_key].append('.')
-					
+
 	for bigram in bigram_counts:
 		if bigram[0] not in bigram_prob:
 			bigram_prob[bigram[0]] = {}
 		# Treating bigram probability as bigram count/unigram count of first word
 		# (some paper said this was the right way to calculate bigram probability)
 		bigram_prob[bigram[0]][bigram[1]] = float(bigram_counts[bigram])/word_counts[bigram[0]]
-	
+
 	# Compile n-gram dictionary using bigram probabilities
 	for ngram in bigram_n_prob:
 		begin = ngram[-1]

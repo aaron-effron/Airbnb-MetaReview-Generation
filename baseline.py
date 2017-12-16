@@ -57,7 +57,7 @@ for listing_id in properties:
     for i, review in enumerate(properties[listing_id]):
         scores = {word: tfidf(word, review, properties[listing_id]) for word in review.words}
         sorted_scores = sorted(scores.items()+sorted_scores, key=lambda x: x[1], reverse=True)
-       
+
     # Find a random sentence with the best keyword
     shuffle(properties[listing_id])
     sentences = []

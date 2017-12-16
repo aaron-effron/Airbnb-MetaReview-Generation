@@ -100,7 +100,7 @@ def get_correlation_score(r1, r2, keywords):
         synsets.append((keyword, set(chain.from_iterable([word.lemma_names() for word in synonyms]))))
 
     num_keyword_hits = 0
-    # Count the number of times a review has the keywords or synsets of the 
+    # Count the number of times a review has the keywords or synsets of the
     # keywords
     for keyword, lemmas in synsets:
         r1_hits = []

@@ -1,4 +1,4 @@
-**CS221 Project: Generating Airbnb Meta-Reviews**
+# CS221 Project: Generating Airbnb Meta-Reviews
 
 Sophia Chen (schen10), Aaron Effron (aeffron), Keshav Santhanam (keshav2)
 

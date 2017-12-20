@@ -1,8 +1,18 @@
-CS221 Project: Generating Airbnb Meta-Reviews
+**CS221 Project: Generating Airbnb Meta-Reviews**
 
 Sophia Chen (schen10), Aaron Effron (aeffron), Keshav Santhanam (keshav2)
 
 CS 221, December 2017
+
+Our goal is to generate “meta-reviews” of properties listed on Airbnb using real reviews of Boston
+properties. These meta-reviews should capture the most relevant features of a property according to the
+reviews. We use a Markov decision process (MDP) to generate sentences in our meta-review. Our word
+choices for the MDP come from n-grams of the reviews for a single listing, and our grammar structure
+is based on the grammar structures found within those reviews. The MDP is run with reinforcement
+learning to set n-gram weights in such a way that maximizes correlation to actual reviews in terms of
+overlap in significant words and length. With our MDP, we are able to achieve an average rating of 5.386,
+on a scale from 1-10, for usefulness of our meta-reviews, which is reasonably close to our human oracle
+rating of 8.256.
 
 FILES
 
